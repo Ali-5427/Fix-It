@@ -14,6 +14,11 @@ import { AuditDiffModal } from './components/AuditDiffModal';
 import { SubmissionReportModal } from './components/SubmissionReportModal';
 import { AuthModal } from './components/AuthModal';
 import { AccountModal } from './components/AccountModal';
+import { ReviewChecklistModal } from './components/ReviewChecklistModal';
+import { PrivacyStringsModal } from './components/PrivacyStringsModal';
+import { CommunityModal } from './components/CommunityModal';
+import { StatusPageModal } from './components/StatusPageModal';
+import { SupportModal } from './components/SupportModal';
 
 import { store } from './services/store';
 import { Application, AuditRun, Finding, SubmissionReport, AuditComparison } from './types';
@@ -46,6 +51,14 @@ export default function App() {
   const [activeDiffComparison, setActiveDiffComparison] = useState<AuditComparison | null>(null);
   const [submissionReport, setSubmissionReport] = useState<SubmissionReport | null>(null);
 
+  // Resource, Community, Support & Status Modals
+  const [checklistModalOpen, setChecklistModalOpen] = useState(false);
+  const [privacyStringsModalOpen, setPrivacyStringsModalOpen] = useState(false);
+  const [communityModalOpen, setCommunityModalOpen] = useState(false);
+  const [communityModalTab, setCommunityModalTab] = useState<'twitter' | 'github' | 'discord' | 'forum'>('twitter');
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
+
   const handleStartAudit = () => {
     setUploadModalOpen(true);
   };
@@ -59,6 +72,8 @@ export default function App() {
   const handleExploreDemo = (appId?: string) => {
     if (appId) {
       store.selectApp(appId);
+    } else {
+      store.selectApp('app_fittrack');
     }
     setCurrentView('audit');
   };
@@ -75,6 +90,11 @@ export default function App() {
 
     const report = store.generateSubmissionReport(targetAppId);
     setSubmissionReport(report);
+  };
+
+  const handleOpenCommunity = (tab: 'twitter' | 'github' | 'discord' | 'forum' = 'twitter') => {
+    setCommunityModalTab(tab);
+    setCommunityModalOpen(true);
   };
 
   return (
@@ -116,6 +136,11 @@ export default function App() {
             onExploreDemo={handleExploreDemo}
             onOpenRejectionAnalyzer={() => setCurrentView('rejection')}
             onOpenAuth={handleOpenAuth}
+            onOpenChecklist={() => setChecklistModalOpen(true)}
+            onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
+            onOpenCommunity={handleOpenCommunity}
+            onOpenStatus={() => setStatusModalOpen(true)}
+            onOpenSupport={() => setSupportModalOpen(true)}
           />
         )}
 
@@ -226,6 +251,32 @@ export default function App() {
         onClose={() => setAccountModalOpen(false)}
         user={user}
         onOpenAuth={() => handleOpenAuth('login')}
+      />
+
+      <ReviewChecklistModal
+        isOpen={checklistModalOpen}
+        onClose={() => setChecklistModalOpen(false)}
+      />
+
+      <PrivacyStringsModal
+        isOpen={privacyStringsModalOpen}
+        onClose={() => setPrivacyStringsModalOpen(false)}
+      />
+
+      <CommunityModal
+        isOpen={communityModalOpen}
+        onClose={() => setCommunityModalOpen(false)}
+        initialTab={communityModalTab}
+      />
+
+      <StatusPageModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+      />
+
+      <SupportModal
+        isOpen={supportModalOpen}
+        onClose={() => setSupportModalOpen(false)}
       />
 
     </div>

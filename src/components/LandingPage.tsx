@@ -19,13 +19,23 @@ interface LandingPageProps {
   onExploreDemo: (appId?: string) => void;
   onOpenRejectionAnalyzer: () => void;
   onOpenAuth?: (mode?: 'login' | 'register', tier?: 'free' | 'pro' | 'studio') => void;
+  onOpenChecklist?: () => void;
+  onOpenPrivacyStrings?: () => void;
+  onOpenCommunity?: (tab?: 'twitter' | 'github' | 'discord' | 'forum') => void;
+  onOpenStatus?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onStartAudit,
   onExploreDemo,
   onOpenRejectionAnalyzer,
-  onOpenAuth
+  onOpenAuth,
+  onOpenChecklist,
+  onOpenPrivacyStrings,
+  onOpenCommunity,
+  onOpenStatus,
+  onOpenSupport
 }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [selectedIssueFix, setSelectedIssueFix] = useState<'location' | 'subscription' | 'metadata' | null>('location');
@@ -81,7 +91,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           HERO SECTION
           ========================================================================= */}
-      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-8 pb-10 md:pt-14 md:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
 
           {/* Headline */}
@@ -93,12 +103,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </h1>
 
           {/* Supporting copy */}
-          <p className="mt-6 text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
             Upload your iOS app, find potential App Store problems, see what to fix, and check again before you submit.
           </p>
 
           {/* CTA Buttons */}
-          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               id="hero_check_app_btn"
               onClick={onStartAudit}
@@ -121,14 +131,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Small supporting line */}
-          <p className="mt-6 text-xs text-slate-500 font-mono">
+          <p className="mt-4 text-xs text-slate-500 font-mono">
             Built for developers shipping iOS apps.
           </p>
 
           {/* =====================================================================
               PRODUCT DASHBOARD VISUAL (Below Hero)
               ===================================================================== */}
-          <div className="mt-14 relative mx-auto max-w-4xl text-left">
+          <div className="mt-8 relative mx-auto max-w-4xl text-left">
             <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-xl shadow-slate-900/5">
               
               {/* Cockpit Header Bar */}
@@ -332,13 +342,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           TRUST SECTION
           ========================================================================= */}
-      <section className="py-12 border-y border-slate-200/80 bg-slate-50/50">
+      <section className="py-7 border-y border-slate-200/80 bg-slate-50/50">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
           <p className="text-sm font-medium text-slate-600">
             Built around Apple's published App Store Review Guidelines.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-mono">
+          <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-mono">
             {['Guidelines', 'Privacy', 'Permissions', 'Subscriptions', 'Metadata', 'Submission'].map((cat, idx) => (
               <span 
                 key={idx}
@@ -349,7 +359,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             ))}
           </div>
 
-          <p className="mt-4 text-[11px] text-slate-400">
+          <p className="mt-2.5 text-[11px] text-slate-400">
             Fix It is an independent tool and is not affiliated with or endorsed by Apple Inc.
           </p>
         </div>
@@ -358,10 +368,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           PROBLEM SECTION
           ========================================================================= */}
-      <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
+      <section className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
         <div className="mx-auto max-w-5xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 tracking-tight">
               Don't find out after you submit.
             </h2>
@@ -467,15 +477,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           HOW IT WORKS (4 Simple Steps)
           ========================================================================= */}
-      <section id="how-it-works" className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
+      <section id="how-it-works" className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
         <div className="mx-auto max-w-5xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">HOW IT WORKS</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 tracking-tight mt-2">
               Four simple steps.
             </h2>
-            <p className="mt-4 text-slate-600 text-sm sm:text-base">
+            <p className="mt-3 text-slate-600 text-sm sm:text-base">
               From export to submission in minutes.
             </p>
           </div>
@@ -532,7 +542,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm font-semibold text-slate-700">
               Submit with confidence.
             </p>
@@ -544,15 +554,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           FEATURES SECTION (6 Simple Feature Cards)
           ========================================================================= */}
-      <section id="product-showcase" className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
+      <section id="product-showcase" className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
         <div className="mx-auto max-w-5xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">FEATURES</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 tracking-tight mt-2">
               Everything you need to check your app.
             </h2>
-            <p className="mt-4 text-slate-600 text-sm sm:text-base">
+            <p className="mt-3 text-slate-600 text-sm sm:text-base">
               Built specifically for iOS developers shipping on the App Store.
             </p>
           </div>
@@ -640,10 +650,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           LARGE PRODUCT SHOWCASE
           ========================================================================= */}
-      <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
+      <section className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
         <div className="mx-auto max-w-5xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">REAL WORKSPACE</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight mt-2">
               Clean dashboard. No clutter.
@@ -748,7 +758,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           SOLO DEVELOPER SECTION
           ========================================================================= */}
-      <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
+      <section className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
         <div className="mx-auto max-w-4xl text-center">
           
           <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">FOR INDIE BUILDERS</span>
@@ -756,12 +766,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             Built for developers who build alone.
           </h2>
           
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="mt-3 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
             You shouldn't need to become an App Store expert just to ship your app.
           </p>
 
           {/* Simple step list */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             {[
               'Build your app.',
               'Upload it.',
@@ -788,15 +798,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           PRICING SECTION
           ========================================================================= */}
-      <section id="pricing" className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
+      <section id="pricing" className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-slate-50/40">
         <div className="mx-auto max-w-5xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">PRICING</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 tracking-tight mt-2">
               Simple, transparent pricing.
             </h2>
-            <p className="mt-4 text-slate-600 text-sm sm:text-base">
+            <p className="mt-3 text-slate-600 text-sm sm:text-base">
               Start free, check your first app, and upgrade when shipping regularly.
             </p>
           </div>
@@ -908,10 +918,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           FAQ SECTION
           ========================================================================= */}
-      <section id="faq" className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
+      <section id="faq" className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-white">
         <div className="mx-auto max-w-3xl">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-widest">FAQ</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight mt-2">
               Frequently asked questions.
@@ -950,18 +960,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           FINAL CALL TO ACTION
           ========================================================================= */}
-      <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-50/60 to-white relative overflow-hidden border-b border-slate-200/80">
+      <section className="py-10 md:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-50/60 to-white relative overflow-hidden border-b border-slate-200/80">
         <div className="mx-auto max-w-4xl text-center relative z-10">
           
           <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-tight leading-tight">
             Before you send your app to Apple, check it first.
           </h2>
           
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-xl mx-auto">
+          <p className="mt-3 text-base sm:text-lg text-slate-600 max-w-xl mx-auto">
             Find problems. Fix them. Check again. Submit.
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={onStartAudit}
               className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 text-sm transition-all shadow-lg shadow-blue-600/25 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
@@ -987,7 +997,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           FOOTER (Inspired by the arrangement and final finish from reference design)
           ========================================================================= */}
-      <footer className="border-t border-slate-200 bg-slate-50/70 pt-16 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <footer className="border-t border-slate-200 bg-slate-50/70 pt-10 pb-5 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="mx-auto max-w-5xl relative z-10">
           
           {/* Main Footer Grid Layout */}
@@ -1087,17 +1097,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </li>
                   <li>
                     <button 
-                      onClick={() => onExploreDemo('app_focusflow')}
+                      onClick={() => onExploreDemo('app_fittrack')}
                       className="hover:text-blue-600 transition-colors cursor-pointer"
                     >
                       Live Demo App
                     </button>
                   </li>
                   <li>
-                    <span className="text-slate-400">Review Checklist</span>
+                    <button 
+                      onClick={() => onOpenChecklist && onOpenChecklist()}
+                      className="hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Review Checklist
+                    </button>
                   </li>
                   <li>
-                    <span className="text-slate-400">Privacy Strings</span>
+                    <button 
+                      onClick={() => onOpenPrivacyStrings && onOpenPrivacyStrings()}
+                      className="hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Privacy Strings
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -1109,16 +1129,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </h4>
                 <ul className="space-y-2.5 text-slate-600 font-medium">
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">Twitter / X</span>
+                    <button 
+                      onClick={() => onOpenCommunity && onOpenCommunity('twitter')}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Twitter / X
+                    </button>
                   </li>
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">GitHub</span>
+                    <button 
+                      onClick={() => onOpenCommunity && onOpenCommunity('github')}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      GitHub
+                    </button>
                   </li>
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">Discord Community</span>
+                    <button 
+                      onClick={() => onOpenCommunity && onOpenCommunity('discord')}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Discord Community
+                    </button>
                   </li>
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">iOS Dev Forum</span>
+                    <button 
+                      onClick={() => onOpenCommunity && onOpenCommunity('forum')}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      iOS Dev Forum
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -1146,10 +1186,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </button>
                   </li>
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">Support Email</span>
+                    <button 
+                      onClick={() => onOpenSupport && onOpenSupport()}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Support Email
+                    </button>
                   </li>
                   <li>
-                    <span className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">Status Page</span>
+                    <button 
+                      onClick={() => onOpenStatus && onOpenStatus()}
+                      className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Status Page
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -1159,7 +1209,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Hairline Divider */}
-          <div className="mt-12 pt-6 border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-mono">
+          <div className="mt-8 pt-5 border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-mono">
             <p>© 2026 Fix It. All rights reserved.</p>
             <p>Fix It is not affiliated with or endorsed by Apple Inc.</p>
           </div>
@@ -1167,7 +1217,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* =====================================================================
               BIG WATERMARK BRAND FINISH (Inspired by the reference image footer)
               ===================================================================== */}
-          <div className="w-full text-center overflow-hidden select-none pointer-events-none pt-10 pb-0 -mb-6 md:-mb-10">
+          <div className="w-full text-center overflow-hidden select-none pointer-events-none pt-4 pb-0 -mb-4 md:-mb-6">
             <span className="text-[17vw] lg:text-[210px] font-black tracking-tight text-blue-600/10 leading-none block font-mono">
               Fix It
             </span>
