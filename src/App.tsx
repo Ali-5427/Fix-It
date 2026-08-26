@@ -44,6 +44,14 @@ export default function App() {
   }, [currentView]);
 
   const user = store.getUser();
+  const isAdminUser = user?.role === 'admin';
+
+  // Guard against non-admin accessing admin view
+  useEffect(() => {
+    if (currentView === 'admin' && !isAdminUser) {
+      setCurrentView('dashboard');
+    }
+  }, [currentView, isAdminUser]);
   const apps = store.getApps();
   const selectedApp = store.getSelectedApp();
   const activeAudit = store.getActiveAudit();
@@ -174,7 +182,7 @@ export default function App() {
               <ScreenshotValidator />
             )}
 
-            {currentView === 'admin' && (
+            {currentView === 'admin' && isAdminUser && (
               <AdminPanel />
             )}
 
@@ -195,9 +203,11 @@ export default function App() {
                 <button onClick={() => setCurrentView('privacy')} className="hover:text-blue-600 transition-colors cursor-pointer">
                   Security & Privacy
                 </button>
-                <button onClick={() => setCurrentView('admin')} className="hover:text-blue-600 transition-colors cursor-pointer">
-                  Rules Registry
-                </button>
+                {isAdminUser && (
+                  <button onClick={() => setCurrentView('admin')} className="hover:text-blue-600 transition-colors cursor-pointer">
+                    Rules Registry
+                  </button>
+                )}
                 <button onClick={() => setCurrentView('rejection')} className="hover:text-blue-600 transition-colors cursor-pointer">
                   Rejection Recovery
                 </button>

@@ -74,7 +74,7 @@ Return JSON in this format:
 }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json'
@@ -161,7 +161,7 @@ Return JSON in this format:
 }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json'
@@ -265,7 +265,7 @@ export async function analyzeMetadataWithAI(
   if (ai) {
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-2.5-flash',
         contents: `Review this App Store Connect metadata for subtle Apple Guideline 2.3 risks (keyword stuffing, misleading claims, trademark infringement, unclear descriptions):
 Name: ${metadata.name}
 Subtitle: ${metadata.subtitle}

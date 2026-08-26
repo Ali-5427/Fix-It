@@ -21,18 +21,6 @@ export function createServerApp() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-  // In-memory / runtime job tracker for async uploads
-  const uploadJobs = new Map<string, {
-    id: string;
-    appId: string;
-    fileName: string;
-    status: string;
-    progress: number;
-    step: string;
-    extractedData?: any;
-    createdAt: string;
-  }>();
-
   // 1. Health Check
   app.get('/api/health', (req: Request, res: Response) => {
     res.json({
@@ -41,127 +29,6 @@ export function createServerApp() {
       version: '1.0.0',
       geminiConfigured: !!process.env.GEMINI_API_KEY
     });
-  });
-
-  // 2. Auth Endpoints
-  app.post('/api/auth/login', (req: Request, res: Response) => {
-    const { email, password, role, tier } = req.body;
-    if (!email && !role) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-    const isAdmin = (email && email.includes('admin')) || role === 'admin';
-    const userTier = tier || (isAdmin ? 'studio' : 'pro');
-    res.json({
-      user: {
-        id: isAdmin ? 'user_admin_01' : ('user_' + Math.random().toString(36).substr(2, 7)),
-        email: email || (isAdmin ? 'admin@fixit.internal' : 'jmohammadali5427@gmail.com'),
-        name: isAdmin ? 'Compliance Administrator' : (email?.split('@')[0]?.replace('.', ' ') || 'Lead iOS Engineer'),
-        role: isAdmin ? 'admin' : 'developer',
-        tier: userTier,
-        teamName: isAdmin ? 'Fix It Internal Core' : 'Apex Mobile Labs',
-        appleTeamId: isAdmin ? 'ARCORP001X' : 'APEX892K9L',
-        token: 'ar_live_sec_' + Math.random().toString(36).substr(2, 12),
-        createdAt: new Date().toISOString(),
-        settings: {
-          notificationsEnabled: true,
-          autoRecheckOnUpload: true,
-          defaultExportFormat: 'markdown',
-          apiKey: 'ar_pk_live_' + Math.random().toString(36).substr(2, 10)
-        }
-      },
-      token: 'session_token_' + Math.random().toString(36).substr(2)
-    });
-  });
-
-  app.post('/api/auth/register', (req: Request, res: Response) => {
-    const { email, name, tier, appleTeamId, teamName } = req.body;
-    const userTier = tier || 'free';
-    res.json({
-      user: {
-        id: 'user_' + Date.now(),
-        email: email || 'developer@example.com',
-        name: name || (email ? email.split('@')[0] : 'iOS Developer'),
-        role: 'developer',
-        tier: userTier,
-        teamName: teamName || 'Independent Developer',
-        appleTeamId: appleTeamId || 'DEV' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-        token: 'ar_live_sec_' + Math.random().toString(36).substr(2, 12),
-        createdAt: new Date().toISOString(),
-        settings: {
-          notificationsEnabled: true,
-          autoRecheckOnUpload: true,
-          defaultExportFormat: 'markdown',
-          apiKey: 'ar_pk_live_' + Math.random().toString(36).substr(2, 10)
-        }
-      },
-      token: 'session_token_' + Math.random().toString(36).substr(2)
-    });
-  });
-
-  app.post('/api/auth/update-profile', (req: Request, res: Response) => {
-    const { user } = req.body;
-    if (!user) {
-      return res.status(400).json({ error: 'User payload required' });
-    }
-    res.json({
-      success: true,
-      user,
-      message: 'Profile updated successfully'
-    });
-  });
-
-  app.post('/api/auth/reset-password', (req: Request, res: Response) => {
-    const { email } = req.body;
-    res.json({
-      success: true,
-      message: `Password reset instructions sent to ${email || 'your email'}. Check your inbox for a secure one-time recovery link.`,
-      resetToken: 'rst_' + Math.random().toString(36).substr(2, 12)
-    });
-  });
-
-  // 3. Upload & Extraction Pipeline
-  app.post('/api/uploads/start', (req: Request, res: Response) => {
-    const { appId, fileName, fileSize, fileType, rawData } = req.body;
-    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-    const job = {
-      id: jobId,
-      appId,
-      fileName: fileName || 'app-release.ipa',
-      status: 'PROCESSING',
-      progress: 15,
-      step: 'Decompressing and validating iOS application bundle...',
-      extractedData: rawData || null,
-      createdAt: new Date().toISOString()
-    };
-
-    uploadJobs.set(jobId, job);
-    res.json({ jobId, status: 'PROCESSING' });
-  });
-
-  app.get('/api/uploads/:jobId/status', (req: Request, res: Response) => {
-    const job = uploadJobs.get(req.params.jobId);
-    if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-
-    // Simulate progressive background extraction stages
-    const now = Date.now();
-    const elapsed = now - new Date(job.createdAt).getTime();
-
-    if (elapsed > 3000) {
-      job.status = 'COMPLETED';
-      job.progress = 100;
-      job.step = 'Extraction complete. Ready for App Store audit.';
-    } else if (elapsed > 2000) {
-      job.progress = 75;
-      job.step = 'Scanning PrivacyInfo.xcprivacy and framework signatures...';
-    } else if (elapsed > 1000) {
-      job.progress = 45;
-      job.step = 'Inspecting Info.plist keys and permission purpose strings...';
-    }
-
-    res.json(job);
   });
 
   // 4. AI Enhancement
@@ -270,8 +137,8 @@ export function createServerApp() {
 
 export function startServer() {
   const app = createServerApp();
-  const PORT = 3000;
-  const distPath = path.join(__dirname, 'dist');
+  const PORT = process.env.PORT || 3000;
+  const distPath = path.resolve('dist');
   app.use(express.static(distPath));
   app.get('*', (req: Request, res: Response) => {
     res.sendFile(path.join(distPath, 'index.html'));

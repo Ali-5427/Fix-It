@@ -4,7 +4,7 @@ import { evaluateInspection } from '../engine/evaluator';
 export const SEED_USERS: User[] = [
   {
     id: 'user_dev_01',
-    email: 'jmohammadali5427@gmail.com',
+    email: 'developer@example.com',
     name: 'Lead iOS Engineer',
     role: 'developer',
     tier: 'pro',
