@@ -551,14 +551,7 @@ const PublicLayout: React.FC<{ title: string; lastUpdated: string; children: Rea
           <p className="mt-1 text-xs text-slate-500 font-mono">Last updated: {lastUpdated}</p>
         )}
       </div>
-      <nav aria-label="Legal pages" className="flex flex-col items-start gap-1.5 text-xs font-semibold text-slate-500 sm:items-end shrink-0">
-        <span className="text-[10px] uppercase tracking-widest text-slate-400 font-mono mb-0.5">Legal</span>
-        {(['privacy', 'terms', 'dpa', 'cookies', 'refunds'] as LegalPage[]).map((p) => (
-          <a key={p} className="hover:text-blue-700 capitalize transition-colors" href={`/${p}`}>
-            {p === 'dpa' ? 'DPA' : p.charAt(0).toUpperCase() + p.slice(1)}
-          </a>
-        ))}
-      </nav>
+
     </header>
 
     <div className="mt-10 max-w-3xl space-y-8">
