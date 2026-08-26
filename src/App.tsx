@@ -20,6 +20,7 @@ import { PrivacyStringsModal } from './components/PrivacyStringsModal';
 import { CommunityModal } from './components/CommunityModal';
 import { StatusPageModal } from './components/StatusPageModal';
 import { SupportModal } from './components/SupportModal';
+import { SiteFooter } from './components/SiteFooter';
 
 import { store } from './services/store';
 import { Application, AuditRun, Finding, SubmissionReport, AuditComparison } from './types';
@@ -191,29 +192,17 @@ export default function App() {
             )}
           </main>
 
-          {/* Persistent Footer */}
-          <footer className="border-t border-slate-200 bg-white py-6 text-xs text-slate-500">
-            <div className="px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-blue-600" />
-                <span className="font-bold text-slate-900 font-mono">Fix It App Store Preflight</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-slate-600">
-                <button onClick={() => setCurrentView('privacy')} className="hover:text-blue-600 transition-colors cursor-pointer">
-                  Security & Privacy
-                </button>
-                {isAdminUser && (
-                  <button onClick={() => setCurrentView('admin')} className="hover:text-blue-600 transition-colors cursor-pointer">
-                    Rules Registry
-                  </button>
-                )}
-                <button onClick={() => setCurrentView('rejection')} className="hover:text-blue-600 transition-colors cursor-pointer">
-                  Rejection Recovery
-                </button>
-              </div>
-            </div>
-          </footer>
+          {/* Shared Full Footer */}
+          <SiteFooter
+            onStartAudit={() => setUploadModalOpen(true)}
+            onOpenRejectionAnalyzer={() => setCurrentView('rejection')}
+            onOpenChecklist={() => setChecklistModalOpen(true)}
+            onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
+            onOpenCommunity={handleOpenCommunity}
+            onOpenStatus={() => setStatusModalOpen(true)}
+            onOpenSupport={() => setSupportModalOpen(true)}
+            onOpenAuth={(mode) => handleOpenAuth(mode)}
+          />
         </div>
 
         {/* Modals */}
