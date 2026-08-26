@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile document
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // User applications
+    match /users/{userId}/apps/{appId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // User audit runs
+    match /users/{userId}/audits/{auditId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Public demo & reference data (read-only for authenticated or all)
+    match /public_samples/{sampleId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
