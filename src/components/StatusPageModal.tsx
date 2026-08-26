@@ -22,7 +22,7 @@ export const StatusPageModal: React.FC<StatusPageModalProps> = ({ isOpen, onClos
 
   const services = [
     {
-      name: 'App Store Review Engine (Fix It AST)',
+      name: 'App Store Review Engine (Fixit AST)',
       status: 'OPERATIONAL',
       uptime: '100%',
       latency: '12ms',

@@ -42,7 +42,7 @@ export async function enhanceAuditWithAI(
   }
 
   try {
-    const prompt = `You are Fix It's expert Apple App Store Review compliance auditor.
+    const prompt = `You are Fixit's expert Apple App Store Review compliance auditor.
 Given the normalized static inspection of an iOS application and its deterministic audit findings:
 
 App: ${inspection.appName} (${inspection.bundleId})
@@ -130,7 +130,7 @@ export async function analyzeAppleRejectionWithAI(
   }
 
   try {
-    const prompt = `You are Fix It's senior Apple App Review Rejection Specialist.
+    const prompt = `You are Fixit's senior Apple App Review Rejection Specialist.
 A developer received the following rejection notice from Apple App Review:
 
 """

@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-2">
         <div className="flex h-14 items-center justify-between rounded-full border border-slate-200/70 bg-white/70 px-5 sm:px-7 backdrop-blur-xl shadow-xs">
           
-          {/* Left: Fix It Logo & Name */}
+          {/* Left: Fixit Logo & Name */}
           <div className="flex items-center gap-3">
             <button 
               id="nav_brand_logo"
@@ -64,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
                 <ShieldCheck className="h-4.5 w-4.5 text-white" />
               </div>
-              <span className="font-bold text-base tracking-tight text-slate-900 font-mono">Fix It</span>
+              <span className="font-bold text-base tracking-tight text-slate-900 font-mono">Fixit</span>
             </button>
           </div>
 

@@ -45,7 +45,7 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white shadow-md shadow-blue-600/20">
                 <ShieldCheck className="h-4 w-4" />
               </div>
-              <span className="font-bold text-xl text-slate-950 font-mono tracking-tight">Fix It</span>
+              <span className="font-bold text-xl text-slate-950 font-mono tracking-tight">Fixit</span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed max-w-sm">
               The preflight check for iOS developers shipping on the App Store. Find risks, fix issues, and submit with confidence.
@@ -191,14 +191,14 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
 
         {/* Bottom Bar */}
         <div className="mt-8 pt-5 border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-mono">
-          <p>© {new Date().getFullYear()} Fix It. All rights reserved.</p>
-          <p>Fix It is not affiliated with or endorsed by Apple Inc.</p>
+          <p>© {new Date().getFullYear()} Fixit. All rights reserved.</p>
+          <p>Fixit is not affiliated with or endorsed by Apple Inc.</p>
         </div>
 
         {/* Big Watermark */}
         <div className="w-full text-center overflow-hidden select-none pointer-events-none pt-4 pb-0 -mb-4 md:-mb-6">
           <span className="text-[17vw] lg:text-[210px] font-black tracking-tight text-blue-600/10 leading-none block font-mono">
-            Fix It
+            Fixit
           </span>
         </div>
 

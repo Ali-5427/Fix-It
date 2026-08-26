@@ -11,13 +11,13 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
   privacy: {
     title: 'Privacy Policy',
     lastUpdated: 'August 26, 2025',
-    intro: 'Fix It ("we", "us", or "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights as a user.',
+    intro: 'Fixit ("we", "us", or "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights as a user.',
     sections: [
       {
         heading: '1. Information We Collect',
         body: (
           <>
-            <p>We collect the following categories of information when you use Fix It:</p>
+            <p>We collect the following categories of information when you use Fixit:</p>
             <ul>
               <li><strong>Account Information:</strong> Your name, email address, and password (stored as a secure hash) when you create an account.</li>
               <li><strong>App Submission Data:</strong> The iOS application files (.ipa, .zip, metadata) you upload for preflight analysis. This data is processed to detect App Store Review risks and is not used for any other purpose.</li>
@@ -34,7 +34,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
           <>
             <p>We use collected data to:</p>
             <ul>
-              <li>Provide, operate, and improve the Fix It preflight audit service.</li>
+              <li>Provide, operate, and improve the Fixit preflight audit service.</li>
               <li>Analyze submitted app files and generate actionable compliance reports.</li>
               <li>Authenticate your identity and keep your account secure.</li>
               <li>Process subscription payments and send billing receipts.</li>
@@ -49,7 +49,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '3. Data Sharing',
         body: (
           <p>
-            We do <strong>not</strong> sell your personal data. We share data only with trusted third-party service providers who help us operate Fix It (e.g., cloud hosting, payment processing, error monitoring), and only to the extent necessary for those services. All providers are bound by data processing agreements and must handle your data in compliance with applicable privacy laws. We may also disclose information if required by law or to protect the rights, property, or safety of our users.
+            We do <strong>not</strong> sell your personal data. We share data only with trusted third-party service providers who help us operate Fixit (e.g., cloud hosting, payment processing, error monitoring), and only to the extent necessary for those services. All providers are bound by data processing agreements and must handle your data in compliance with applicable privacy laws. We may also disclose information if required by law or to protect the rights, property, or safety of our users.
           </p>
         ),
       },
@@ -98,7 +98,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '8. Children\'s Privacy',
         body: (
           <p>
-            Fix It is not directed to children under the age of 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us immediately so we can delete it.
+            Fixit is not directed to children under the age of 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us immediately so we can delete it.
           </p>
         ),
       },
@@ -106,7 +106,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '9. Changes to This Policy',
         body: (
           <p>
-            We may update this Privacy Policy from time to time. If we make material changes, we will notify you via email or a prominent notice in the app at least 14 days before the changes take effect. Continued use of Fix It after that date constitutes your acceptance of the updated policy.
+            We may update this Privacy Policy from time to time. If we make material changes, we will notify you via email or a prominent notice in the app at least 14 days before the changes take effect. Continued use of Fixit after that date constitutes your acceptance of the updated policy.
           </p>
         ),
       },
@@ -117,13 +117,13 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
   terms: {
     title: 'Terms of Service',
     lastUpdated: 'August 26, 2025',
-    intro: 'These Terms of Service ("Terms") govern your access to and use of Fix It. By creating an account or using the service you agree to be bound by these Terms.',
+    intro: 'These Terms of Service ("Terms") govern your access to and use of Fixit. By creating an account or using the service you agree to be bound by these Terms.',
     sections: [
       {
-        heading: '1. About Fix It',
+        heading: '1. About Fixit',
         body: (
           <p>
-            Fix It is an automated preflight analysis tool for iOS developers. It scans application binaries, metadata, and configuration files to identify potential App Store Review risks before submission. Fix It provides guidance only — it does not guarantee App Store approval and does not replace advice from Apple or qualified legal counsel.
+            Fixit is an automated preflight analysis tool for iOS developers. It scans application binaries, metadata, and configuration files to identify potential App Store Review risks before submission. Fixit provides guidance only — it does not guarantee App Store approval and does not replace advice from Apple or qualified legal counsel.
           </p>
         ),
       },
@@ -131,7 +131,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '2. Eligibility',
         body: (
           <p>
-            You must be at least 18 years old and have the legal authority to enter into these Terms to use Fix It. By using the service you confirm that all information you provide is accurate and that you are authorized to submit the applications and files you upload.
+            You must be at least 18 years old and have the legal authority to enter into these Terms to use Fixit. By using the service you confirm that all information you provide is accurate and that you are authorized to submit the applications and files you upload.
           </p>
         ),
       },
@@ -156,9 +156,9 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
             <ul>
               <li>Upload files that contain malware, spyware, or any malicious code.</li>
               <li>Submit applications that violate applicable laws or regulations.</li>
-              <li>Attempt to reverse-engineer, decompile, or access unauthorized parts of the Fix It platform.</li>
+              <li>Attempt to reverse-engineer, decompile, or access unauthorized parts of the Fixit platform.</li>
               <li>Use the service to harass, abuse, or harm other users.</li>
-              <li>Resell or sublicense access to Fix It without our written consent.</li>
+              <li>Resell or sublicense access to Fixit without our written consent.</li>
               <li>Use automated bots or scripts to abuse the API or audit system.</li>
             </ul>
           </>
@@ -168,7 +168,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '5. Subscriptions and Billing',
         body: (
           <p>
-            Fix It offers free and paid subscription tiers. Paid subscriptions are billed monthly or annually in advance. Prices are shown in USD and may be subject to applicable taxes. We reserve the right to change pricing with at least 30 days' notice to active subscribers. Failure to pay may result in downgrade or suspension of your account.
+            Fixit offers free and paid subscription tiers. Paid subscriptions are billed monthly or annually in advance. Prices are shown in USD and may be subject to applicable taxes. We reserve the right to change pricing with at least 30 days' notice to active subscribers. Failure to pay may result in downgrade or suspension of your account.
           </p>
         ),
       },
@@ -176,7 +176,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '6. Intellectual Property',
         body: (
           <p>
-            All content, technology, trademarks, and intellectual property within Fix It are owned by us or our licensors. Your use of the service does not grant you any ownership rights. You retain full ownership of all application files and data you upload — we do not claim any rights over your apps.
+            All content, technology, trademarks, and intellectual property within Fixit are owned by us or our licensors. Your use of the service does not grant you any ownership rights. You retain full ownership of all application files and data you upload — we do not claim any rights over your apps.
           </p>
         ),
       },
@@ -184,7 +184,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '7. Limitation of Liability',
         body: (
           <p>
-            To the maximum extent permitted by applicable law, Fix It and its team shall not be liable for any indirect, incidental, special, consequential, or punitive damages — including loss of revenue, loss of data, or App Store rejection — arising out of or related to your use of the service, even if we have been advised of the possibility of such damages. Our total liability to you for any claim shall not exceed the amount you paid us in the 12 months preceding the event giving rise to the claim.
+            To the maximum extent permitted by applicable law, Fixit and its team shall not be liable for any indirect, incidental, special, consequential, or punitive damages — including loss of revenue, loss of data, or App Store rejection — arising out of or related to your use of the service, even if we have been advised of the possibility of such damages. Our total liability to you for any claim shall not exceed the amount you paid us in the 12 months preceding the event giving rise to the claim.
           </p>
         ),
       },
@@ -192,7 +192,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '8. Disclaimer of Warranties',
         body: (
           <p>
-            Fix It is provided "as is" and "as available" without warranties of any kind, whether express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that the service will be uninterrupted, error-free, or that analysis results will be 100% accurate.
+            Fixit is provided "as is" and "as available" without warranties of any kind, whether express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that the service will be uninterrupted, error-free, or that analysis results will be 100% accurate.
           </p>
         ),
       },
@@ -216,7 +216,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '11. Changes to These Terms',
         body: (
           <p>
-            We may modify these Terms at any time. If we make material changes, we will notify you by email or in-app notice at least 14 days before they take effect. Continued use of Fix It after changes take effect constitutes your agreement to the revised Terms.
+            We may modify these Terms at any time. If we make material changes, we will notify you by email or in-app notice at least 14 days before they take effect. Continued use of Fixit after changes take effect constitutes your agreement to the revised Terms.
           </p>
         ),
       },
@@ -227,7 +227,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
   dpa: {
     title: 'Data Processing Addendum',
     lastUpdated: 'August 26, 2025',
-    intro: 'This Data Processing Addendum ("DPA") forms part of the agreement between Fix It ("Processor") and the customer ("Controller") and governs the processing of personal data on behalf of the Controller in connection with the Fix It service.',
+    intro: 'This Data Processing Addendum ("DPA") forms part of the agreement between Fixit ("Processor") and the customer ("Controller") and governs the processing of personal data on behalf of the Controller in connection with the Fixit service.',
     sections: [
       {
         heading: '1. Definitions',
@@ -241,7 +241,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '2. Roles of the Parties',
         body: (
           <p>
-            The Customer acts as the <strong>Controller</strong> determining the purposes and means of processing Personal Data submitted through Fix It. Fix It acts as the <strong>Processor</strong>, processing Personal Data solely on the documented instructions of the Controller and for the purpose of providing the agreed services.
+            The Customer acts as the <strong>Controller</strong> determining the purposes and means of processing Personal Data submitted through Fixit. Fixit acts as the <strong>Processor</strong>, processing Personal Data solely on the documented instructions of the Controller and for the purpose of providing the agreed services.
           </p>
         ),
       },
@@ -249,7 +249,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '3. Scope and Purpose of Processing',
         body: (
           <>
-            <p>Fix It processes Personal Data for the following purposes only:</p>
+            <p>Fixit processes Personal Data for the following purposes only:</p>
             <ul>
               <li>Performing preflight analysis of submitted iOS application files.</li>
               <li>Generating compliance reports and audit histories.</li>
@@ -264,7 +264,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '4. Data Subject Categories',
         body: (
           <p>
-            The Personal Data processed may relate to: iOS developer account holders, team members granted access to the Fix It workspace, and end-users whose data may be incidentally present in submitted application files (e.g., crash logs or test data). Controllers are responsible for ensuring they have lawful authority to submit any data containing third-party Personal Data.
+            The Personal Data processed may relate to: iOS developer account holders, team members granted access to the Fixit workspace, and end-users whose data may be incidentally present in submitted application files (e.g., crash logs or test data). Controllers are responsible for ensuring they have lawful authority to submit any data containing third-party Personal Data.
           </p>
         ),
       },
@@ -272,7 +272,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '5. Security Measures',
         body: (
           <>
-            <p>Fix It implements the following technical and organizational security measures:</p>
+            <p>Fixit implements the following technical and organizational security measures:</p>
             <ul>
               <li>TLS 1.2+ encryption for all data in transit.</li>
               <li>AES-256 encryption for data at rest.</li>
@@ -288,7 +288,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '6. Sub-processors',
         body: (
           <>
-            <p>Fix It uses the following categories of sub-processors to deliver its service:</p>
+            <p>Fixit uses the following categories of sub-processors to deliver its service:</p>
             <ul>
               <li><strong>Cloud Infrastructure:</strong> Hosting and storage providers (e.g., Google Cloud Platform, Firebase).</li>
               <li><strong>Payment Processing:</strong> Stripe, Inc. for secure billing.</li>
@@ -303,7 +303,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '7. International Data Transfers',
         body: (
           <p>
-            If Personal Data is transferred outside the European Economic Area (EEA) or the United Kingdom, Fix It will ensure such transfers are protected by appropriate safeguards, including Standard Contractual Clauses (SCCs) as approved by the European Commission, or by relying on an adequacy decision. Customers in regulated jurisdictions may request a copy of applicable transfer mechanisms by contacting us.
+            If Personal Data is transferred outside the European Economic Area (EEA) or the United Kingdom, Fixit will ensure such transfers are protected by appropriate safeguards, including Standard Contractual Clauses (SCCs) as approved by the European Commission, or by relying on an adequacy decision. Customers in regulated jurisdictions may request a copy of applicable transfer mechanisms by contacting us.
           </p>
         ),
       },
@@ -311,7 +311,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '8. Data Subject Requests',
         body: (
           <p>
-            Fix It will assist the Controller in fulfilling Data Subject requests (access, deletion, correction, portability) within a reasonable timeframe. Upon receiving a Data Subject request directed to Fix It, we will promptly notify the Controller and cooperate as required.
+            Fixit will assist the Controller in fulfilling Data Subject requests (access, deletion, correction, portability) within a reasonable timeframe. Upon receiving a Data Subject request directed to Fixit, we will promptly notify the Controller and cooperate as required.
           </p>
         ),
       },
@@ -319,7 +319,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '9. Audit Rights',
         body: (
           <p>
-            Controllers may request a summary of Fix It's data processing practices and security certifications once per calendar year at no additional cost. Requests for on-site audits will be considered on a case-by-case basis and may be subject to reasonable scheduling and cost arrangements.
+            Controllers may request a summary of Fixit's data processing practices and security certifications once per calendar year at no additional cost. Requests for on-site audits will be considered on a case-by-case basis and may be subject to reasonable scheduling and cost arrangements.
           </p>
         ),
       },
@@ -327,7 +327,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '10. Termination and Deletion',
         body: (
           <p>
-            Upon termination of the service agreement, Fix It will, at the Controller's election, delete or return all Personal Data processed under this DPA within 30 days, and will certify such deletion in writing upon request. Backup copies will be purged within 90 days.
+            Upon termination of the service agreement, Fixit will, at the Controller's election, delete or return all Personal Data processed under this DPA within 30 days, and will certify such deletion in writing upon request. Backup copies will be purged within 90 days.
           </p>
         ),
       },
@@ -338,7 +338,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
   cookies: {
     title: 'Cookie Policy',
     lastUpdated: 'August 26, 2025',
-    intro: 'This Cookie Policy explains what cookies are, which ones Fix It uses, and how you can manage your preferences.',
+    intro: 'This Cookie Policy explains what cookies are, which ones Fixit uses, and how you can manage your preferences.',
     sections: [
       {
         heading: '1. What Are Cookies?',
@@ -352,7 +352,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '2. Essential Cookies',
         body: (
           <>
-            <p>These cookies are strictly necessary for Fix It to function. You cannot opt out of them while using the service.</p>
+            <p>These cookies are strictly necessary for Fixit to function. You cannot opt out of them while using the service.</p>
             <table>
               <thead><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
               <tbody>
@@ -368,12 +368,12 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '3. Analytics Cookies',
         body: (
           <>
-            <p>With your consent, we use analytics cookies to understand how users navigate Fix It so we can improve the experience. These cookies do not identify you personally.</p>
+            <p>With your consent, we use analytics cookies to understand how users navigate Fixit so we can improve the experience. These cookies do not identify you personally.</p>
             <table>
               <thead><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
               <tbody>
                 <tr><td><code>_fixit_analytics</code></td><td>Tracks page views, feature usage, and session duration in aggregate.</td><td>12 months</td></tr>
-                <tr><td><code>_fixit_ref</code></td><td>Captures referral source to understand how users find Fix It.</td><td>30 days</td></tr>
+                <tr><td><code>_fixit_ref</code></td><td>Captures referral source to understand how users find Fixit.</td><td>30 days</td></tr>
               </tbody>
             </table>
           </>
@@ -383,7 +383,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '4. Third-Party Cookies',
         body: (
           <p>
-            Fix It may embed content or integrate third-party services (e.g., payment provider iframes, authentication providers) that set their own cookies. These are governed by those providers' privacy and cookie policies. We do not control third-party cookies and recommend reviewing those providers' policies directly.
+            Fixit may embed content or integrate third-party services (e.g., payment provider iframes, authentication providers) that set their own cookies. These are governed by those providers' privacy and cookie policies. We do not control third-party cookies and recommend reviewing those providers' policies directly.
           </p>
         ),
       },
@@ -391,7 +391,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '5. Managing Your Cookie Preferences',
         body: (
           <p>
-            You can manage your cookie preferences at any time using your browser settings. Most browsers allow you to view, delete, and block cookies. Note that disabling essential cookies will prevent Fix It from functioning correctly. For analytics cookies specifically, you can withdraw consent by updating your preferences in your account settings or via the cookie banner.
+            You can manage your cookie preferences at any time using your browser settings. Most browsers allow you to view, delete, and block cookies. Note that disabling essential cookies will prevent Fixit from functioning correctly. For analytics cookies specifically, you can withdraw consent by updating your preferences in your account settings or via the cookie banner.
           </p>
         ),
       },
@@ -399,7 +399,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '6. Do Not Track',
         body: (
           <p>
-            Some browsers include a "Do Not Track" (DNT) feature that signals websites not to track user activity. Fix It respects DNT signals — when detected, we disable non-essential analytics cookies automatically.
+            Some browsers include a "Do Not Track" (DNT) feature that signals websites not to track user activity. Fixit respects DNT signals — when detected, we disable non-essential analytics cookies automatically.
           </p>
         ),
       },
@@ -407,7 +407,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
         heading: '7. Updates to This Policy',
         body: (
           <p>
-            We may update this Cookie Policy from time to time as our practices or applicable laws change. Any changes will be posted here with an updated "Last Updated" date. Continued use of Fix It constitutes your acceptance of any revised policy.
+            We may update this Cookie Policy from time to time as our practices or applicable laws change. Any changes will be posted here with an updated "Last Updated" date. Continued use of Fixit constitutes your acceptance of any revised policy.
           </p>
         ),
       },
@@ -418,7 +418,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
   refunds: {
     title: 'Refund and Cancellation Policy',
     lastUpdated: 'August 26, 2025',
-    intro: 'We want you to be satisfied with Fix It. This policy explains how cancellations and refunds work for our paid subscription plans.',
+    intro: 'We want you to be satisfied with Fixit. This policy explains how cancellations and refunds work for our paid subscription plans.',
     sections: [
       {
         heading: '1. Free Plan',
@@ -443,7 +443,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
             <p>We offer refunds in the following circumstances:</p>
             <ul>
               <li><strong>New subscribers — 7-day money-back guarantee:</strong> If you subscribed to a paid plan for the first time and are not satisfied, you may request a full refund within 7 calendar days of your first payment.</li>
-              <li><strong>Service outage:</strong> If Fix It experiences a verified service outage of more than 24 consecutive hours in any billing month, affected subscribers may request a pro-rata credit for the downtime.</li>
+              <li><strong>Service outage:</strong> If Fixit experiences a verified service outage of more than 24 consecutive hours in any billing month, affected subscribers may request a pro-rata credit for the downtime.</li>
               <li><strong>Billing error:</strong> If you were charged in error (e.g., duplicate charge), we will issue a full refund upon verification.</li>
               <li><strong>Exceptional circumstances:</strong> We review refund requests on a case-by-case basis for situations outside those above. We aim to be fair and reasonable.</li>
             </ul>
@@ -459,7 +459,7 @@ const pages: Record<LegalPage, { title: string; lastUpdated: string; intro: stri
               <li>Subscription periods already used beyond the 7-day guarantee window.</li>
               <li>Forgetting to cancel before a renewal date.</li>
               <li>Downgrading from a higher plan to a lower plan mid-cycle.</li>
-              <li>App Store rejections — Fix It provides analysis guidance, not approval guarantees.</li>
+              <li>App Store rejections — Fixit provides analysis guidance, not approval guarantees.</li>
             </ul>
           </>
         ),
@@ -545,7 +545,7 @@ const PublicLayout: React.FC<{ title: string; lastUpdated: string; children: Rea
   <main className="mx-auto min-h-screen max-w-4xl px-6 py-10 sm:py-16">
     <header className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <a href="/" className="font-mono text-sm font-bold text-blue-700 hover:text-blue-800">← Fix It</a>
+        <a href="/" className="font-mono text-sm font-bold text-blue-700 hover:text-blue-800">← Fixit</a>
         <h1 className="mt-4 text-3xl font-extrabold text-slate-950 tracking-tight">{title}</h1>
         {lastUpdated && (
           <p className="mt-1 text-xs text-slate-500 font-mono">Last updated: {lastUpdated}</p>
@@ -559,7 +559,7 @@ const PublicLayout: React.FC<{ title: string; lastUpdated: string; children: Rea
     </div>
 
     <footer className="mt-16 border-t pt-6 text-xs text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-      <span>© {new Date().getFullYear()} Fix It. All rights reserved.</span>
+      <span>© {new Date().getFullYear()} Fixit. All rights reserved.</span>
       {siteConfig.supportEmail ? (
         <span>Questions? <a className="underline text-blue-600 hover:text-blue-800" href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a></span>
       ) : (

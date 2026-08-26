@@ -34,7 +34,7 @@ export const SubmissionReportModal: React.FC<SubmissionReportModalProps> = ({
   };
 
   const generateMarkdown = () => {
-    return `# Fix It App Store Submission Readiness Report
+    return `# Fixit App Store Submission Readiness Report
 **Application:** ${report.appName} (\`${report.bundleId}\`)
 **Version:** ${report.version} (Build ${report.build})
 **Generated Date:** ${new Date(report.generatedAt).toLocaleString()}

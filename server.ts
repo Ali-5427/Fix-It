@@ -145,7 +145,7 @@ export function startServer() {
   });
 
   app.listen(PORT, () => {
-    console.log(`Fix It server running on port ${PORT}`);
+    console.log(`Fixit server running on port ${PORT}`);
   });
 }
 

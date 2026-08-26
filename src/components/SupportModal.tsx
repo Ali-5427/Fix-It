@@ -32,7 +32,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !message || !supportEmail) return;
-    window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(`[Fix It] ${subject}`)}&body=${encodeURIComponent(`Reply-to: ${email}\n\n${message}`)}`;
+    window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(`[Fixit] ${subject}`)}&body=${encodeURIComponent(`Reply-to: ${email}\n\n${message}`)}`;
   };
 
   const handleCopyEmail = () => {
@@ -79,7 +79,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
               </div>
               <h3 className="text-lg font-bold text-slate-950">Inquiry Received!</h3>
               <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                Thank you for contacting Fix It support. An iOS compliance specialist has received your case and will respond to <strong className="text-slate-900 font-mono">{email}</strong> within 2 hours.
+                Thank you for contacting Fixit support. An iOS compliance specialist has received your case and will respond to <strong className="text-slate-900 font-mono">{email}</strong> within 2 hours.
               </p>
               <div className="pt-4">
                 <button
@@ -182,7 +182,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
         {/* Footer */}
         <div className="px-6 py-3.5 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 flex items-center justify-between">
-          <span>Fix It iOS Engineering Support</span>
+          <span>Fixit iOS Engineering Support</span>
           <button
             onClick={onClose}
             className="text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"

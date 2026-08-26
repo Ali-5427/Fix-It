@@ -136,7 +136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-slate-900 text-base leading-tight font-mono">
-                {mode === 'login' ? 'Sign In to Fix It' : mode === 'register' ? 'Create Developer Account' : 'Reset Password'}
+                {mode === 'login' ? 'Sign In to Fixit' : mode === 'register' ? 'Create Developer Account' : 'Reset Password'}
               </h3>
               <p className="text-[11px] text-slate-500">
                 {mode === 'login' ? 'Access your App Store preflight audits' : mode === 'register' ? 'Inspect iOS binaries and resolve App Review risks' : 'We will send one-time recovery instructions'}

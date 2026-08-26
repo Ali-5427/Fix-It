@@ -163,7 +163,7 @@ export const ReviewChecklistModal: React.FC<ReviewChecklistModalProps> = ({ isOp
 
   const handleCopyMarkdown = () => {
     const lines = [
-      '# App Store Submission Preflight Checklist (Fix It)',
+      '# App Store Submission Preflight Checklist (Fixit)',
       `Progress: ${completedCount}/${totalCount} (${percent}%)\n`
     ];
 

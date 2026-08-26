@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs shadow-xs">
               FI
             </div>
-            <span className="font-bold text-slate-900 font-mono text-sm tracking-tight">Fix It</span>
+            <span className="font-bold text-slate-900 font-mono text-sm tracking-tight">Fixit</span>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <span className="font-bold text-slate-900 font-mono text-sm tracking-tight group-hover:text-blue-600 transition-colors">
-                Fix It
+                Fixit
               </span>
               <span className="block text-[10px] text-slate-400 font-mono">App Store Preflight</span>
             </div>

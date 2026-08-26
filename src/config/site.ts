@@ -1,7 +1,7 @@
 const configuredUrl = import.meta.env.VITE_SITE_URL?.trim().replace(/\/$/, '');
 
 export const siteConfig = {
-  name: 'Fix It',
+  name: 'Fixit',
   url: configuredUrl || 'http://localhost:3000',
   supportEmail: import.meta.env.VITE_SUPPORT_EMAIL?.trim() || '',
   analyticsEndpoint: import.meta.env.VITE_ANALYTICS_ENDPOINT?.trim() || '',

@@ -51,8 +51,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const faqItems = [
     {
-      q: 'What does Fix It check?',
-      a: 'Fix It checks your iOS app for common App Store submission problems. This includes missing or unclear privacy messages, subscription paywall requirements, account deletion buttons, and App Store title and keyword character limits.'
+      q: 'What does Fixit check?',
+      a: 'Fixit checks your iOS app for common App Store submission problems. This includes missing or unclear privacy messages, subscription paywall requirements, account deletion buttons, and App Store title and keyword character limits.'
     },
     {
       q: 'How do I check my app?',
@@ -67,12 +67,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       a: "You can paste Apple's rejection message into our Rejection Solver. We'll help you understand what went wrong and what you need to fix before submitting again."
     },
     {
-      q: 'Does Fix It guarantee Apple approval?',
-      a: 'No. Apple makes the final review decision. Fix It helps you find potential problems before you submit.'
+      q: 'Does Fixit guarantee Apple approval?',
+      a: 'No. Apple makes the final review decision. Fixit helps you find potential problems before you submit.'
     },
     {
-      q: 'Who is Fix It for?',
-      a: 'Fix It is built for solo developers, indie makers, and small teams shipping iOS apps who want to avoid frustrating submission delays.'
+      q: 'Who is Fixit for?',
+      a: 'Fixit is built for solo developers, indie makers, and small teams shipping iOS apps who want to avoid frustrating submission delays.'
     },
     {
       q: 'What happens to my uploaded app?',
@@ -361,7 +361,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <p className="mt-2.5 text-[11px] text-slate-400">
-            Fix It is an independent tool and is not affiliated with or endorsed by Apple Inc.
+            Fixit is an independent tool and is not affiliated with or endorsed by Apple Inc.
           </p>
         </div>
       </section>
@@ -422,7 +422,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </div>
 
-            {/* The Fix It Way */}
+            {/* The Fixit Way */}
             <div className="rounded-3xl border-2 border-blue-600 bg-gradient-to-b from-blue-50/40 to-white p-6 sm:p-8 flex flex-col justify-between relative shadow-xl shadow-blue-600/10">
               <div className="absolute -top-3 right-6 rounded-full bg-blue-600 text-white font-mono text-[10px] font-bold px-3 py-0.5 uppercase tracking-wider shadow-md shadow-blue-600/30">
                 FASTER WORKFLOW
@@ -431,7 +431,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div>
                 <div className="flex items-center justify-between pb-4 border-b border-blue-200">
                   <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-700">
-                    WITH FIX IT
+                    WITH Fixit
                   </span>
                   <span className="text-xs text-blue-600 font-medium">Clean & fast</span>
                 </div>
@@ -777,7 +777,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               'Build your app.',
               'Upload it.',
               'Check it.',
-              'Fix it.',
+              'Fixit.',
               'Check again.',
               'Submit it.'
             ].map((stepText, idx) => (
