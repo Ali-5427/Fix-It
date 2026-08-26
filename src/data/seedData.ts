@@ -93,7 +93,7 @@ export function createInitialSeedApps(): Application[] {
       createdAt: '2026-08-10T14:22:00Z',
       updatedAt: '2026-08-25T01:00:00Z',
       lastAuditDate: '2026-08-25T01:00:00Z',
-      lastAuditStatus: 'HIGH_RISK',
+      lastAuditStatus: 'NOT_READY',
       remainingIssuesCount: 4,
       isDemo: true
     }

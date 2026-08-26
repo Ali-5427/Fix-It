@@ -154,7 +154,7 @@ ${report.reviewerNotesDraft}
           
           {/* Top Banner Card */}
           <div className={`p-5 rounded-2xl border ${
-            report.readinessStatus === 'READY' 
+            report.readinessStatus === 'NO_HIGH_RISK_ISSUES_DETECTED' 
               ? 'border-emerald-200 bg-emerald-50/60'
               : report.readinessStatus === 'READY_WITH_WARNINGS'
               ? 'border-amber-200 bg-amber-50/60'
@@ -163,7 +163,7 @@ ${report.reviewerNotesDraft}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold font-mono border ${
-                  report.readinessStatus === 'READY' 
+                  report.readinessStatus === 'NO_HIGH_RISK_ISSUES_DETECTED' 
                     ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
                     : report.readinessStatus === 'READY_WITH_WARNINGS'
                     ? 'border-amber-300 bg-amber-100 text-amber-800'

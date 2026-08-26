@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Application, AuditRun, Finding, FindingStatus, RuleCategory } from '../types';
 import { store } from '../services/store';
+import { compareAudits } from '../engine/evaluator';
 
 interface AuditViewProps {
   app: Application | null;
@@ -116,7 +117,7 @@ export const AuditView: React.FC<AuditViewProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono border ${
-                audit.readinessStatus === 'READY'
+                audit.readinessStatus === 'NO_HIGH_RISK_ISSUES_DETECTED'
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   : audit.readinessStatus === 'READY_WITH_WARNINGS'
                   ? 'border-amber-200 bg-amber-50 text-amber-700'
@@ -124,7 +125,27 @@ export const AuditView: React.FC<AuditViewProps> = ({
               }`}>
                 READINESS: {audit.readinessStatus.replace(/_/g, ' ')}
               </span>
-              <span className="text-xs text-slate-500 font-mono">v{audit.appVersion} (Build {audit.buildNumber})</span>
+
+              {/* Build History Selector */}
+              {auditsHistory.length > 1 ? (
+                <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                  <History className="h-3.5 w-3.5 text-slate-500" />
+                  <select
+                    value={audit.id}
+                    onChange={(e) => store.setActiveAudit(e.target.value)}
+                    className="bg-transparent font-mono text-xs text-slate-700 font-semibold focus:outline-none cursor-pointer"
+                  >
+                    {auditsHistory.map((a, idx) => (
+                      <option key={a.id} value={a.id}>
+                        Build {a.buildNumber} (v{a.appVersion}) {idx === auditsHistory.length - 1 ? '— Latest' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-500 font-mono">v{audit.appVersion} (Build {audit.buildNumber})</span>
+              )}
+
               <span className="text-slate-400 text-xs">•</span>
               <span className="text-xs text-blue-600 font-mono font-medium">{app.bundleId}</span>
             </div>
@@ -132,6 +153,24 @@ export const AuditView: React.FC<AuditViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {auditsHistory.length > 1 && (
+              <button
+                id="btn_compare_builds"
+                onClick={() => {
+                  const idx = auditsHistory.findIndex(a => a.id === audit.id);
+                  const prev = idx > 0 ? auditsHistory[idx - 1] : auditsHistory[0];
+                  if (prev && prev.id !== audit.id) {
+                    const comp = compareAudits(prev, audit);
+                    onOpenDiff(comp);
+                  }
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-300 transition-colors font-mono cursor-pointer shadow-xs"
+              >
+                <GitCompare className="h-3.5 w-3.5 text-blue-600" />
+                <span>Compare Builds</span>
+              </button>
+            )}
+
             <button
               id="btn_rerun_audit"
               onClick={handleReRunAudit}

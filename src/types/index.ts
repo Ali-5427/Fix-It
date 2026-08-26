@@ -1,10 +1,9 @@
-export type AuditSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+export type AuditSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'MANUAL_CHECK';
 
-export type ReadinessStatus = 
-  | 'READY' 
-  | 'READY_WITH_WARNINGS' 
-  | 'HIGH_RISK' 
-  | 'MANUAL_REVIEW_REQUIRED';
+export type ReadinessStatus =
+  | 'NOT_READY'
+  | 'READY_WITH_WARNINGS'
+  | 'NO_HIGH_RISK_ISSUES_DETECTED';
 
 export type FindingStatus = 
   | 'OPEN' 
@@ -178,6 +177,7 @@ export interface NormalizedAppInspection {
     hasAccountDeletion: boolean;
     hasUserGeneratedContent: boolean;
     hasAdvertising: boolean;
+    hasExternalPayments?: boolean;
   };
   metadata: {
     name?: string;
@@ -188,6 +188,8 @@ export interface NormalizedAppInspection {
     privacyPolicyUrl?: string;
     category?: string;
     ageRating?: string;
+    reviewerNotes?: string;
+    listingProvided?: boolean;
   };
   screenshots: {
     id: string;
@@ -233,8 +235,10 @@ export interface AuditRun {
   highRiskCount: number;
   mediumRiskCount: number;
   lowRiskCount: number;
-  infoCount: number;
+  manualCheckCount: number;
+  infoCount?: number;
   findings: Finding[];
+  passedChecks: { ruleId: string; title: string }[];
   reviewerNotesDraft?: string;
   isAiEnhanced?: boolean;
 }
@@ -252,6 +256,7 @@ export interface Application {
   lastAuditDate?: string;
   lastAuditStatus?: ReadinessStatus;
   remainingIssuesCount: number;
+  isDemo?: boolean;
 }
 
 export interface AuditComparison {

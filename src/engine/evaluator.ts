@@ -1,13 +1,402 @@
-import { 
-  NormalizedAppInspection, 
-  Finding, 
-  AuditRun, 
-  ReadinessStatus, 
-  AuditSeverity, 
+import {
+  NormalizedAppInspection,
+  Finding,
+  AuditRun,
+  ReadinessStatus,
   AuditComparison,
-  FindingEvidence 
+  FindingEvidence,
+  AuditSeverity
 } from '../types';
 import { APP_STORE_RULES } from './rules';
+import { isValidAppStoreScreenshotSize } from './extractor';
+
+export function computeReadiness(findings: Finding[]): ReadinessStatus {
+  const open = findings.filter(f => f.status === 'OPEN' || f.status === 'IN_PROGRESS');
+  const high = open.filter(f => f.severity === 'HIGH').length;
+  const mediumOrLow = open.filter(f => f.severity === 'MEDIUM' || f.severity === 'LOW').length;
+  if (high > 0) return 'NOT_READY';
+  if (mediumOrLow > 0) return 'READY_WITH_WARNINGS';
+  return 'NO_HIGH_RISK_ISSUES_DETECTED';
+}
+
+export function readinessCopy(status: ReadinessStatus): { label: string; summaryHint: string } {
+  switch (status) {
+    case 'NOT_READY':
+      return {
+        label: 'NOT READY',
+        summaryHint: 'Important issues remain. Fix the high-priority items before submitting.'
+      };
+    case 'READY_WITH_WARNINGS':
+      return {
+        label: 'READY WITH WARNINGS',
+        summaryHint: 'No major detected problems, but some things should be reviewed or improved.'
+      };
+    default:
+      return {
+        label: 'NO HIGH-RISK ISSUES DETECTED',
+        summaryHint: 'No major issues were detected in the checks we ran. This is not a guarantee of App Review approval.'
+      };
+  }
+}
+
+interface RuleEval {
+  triggered: boolean;
+  severity?: AuditSeverity;
+  evidence: FindingEvidence[];
+  why: string;
+  action: string;
+  verify: string;
+}
+
+function evidence(
+  key: string,
+  location: string,
+  detectionStatus: FindingEvidence['detectionStatus'],
+  notes: string,
+  extractedValue?: FindingEvidence['extractedValue']
+): FindingEvidence {
+  return { key, location, detectionStatus, notes, extractedValue };
+}
+
+function evaluateRule(ruleId: string, inspection: NormalizedAppInspection, ruleWhy: string, ruleAction: string): RuleEval {
+  const empty: RuleEval = {
+    triggered: false,
+    evidence: [],
+    why: ruleWhy,
+    action: ruleAction,
+    verify: 'Confirm this in your project and App Store Connect listing.'
+  };
+
+  switch (ruleId) {
+    case 'RULE-PRIV-01': {
+      if (!inspection.privacyManifest.hasPrivacyManifest) {
+        return {
+          triggered: true,
+          evidence: [evidence('PrivacyInfo.xcprivacy', 'App bundle', 'NOT_DETECTED', 'No PrivacyInfo.xcprivacy file was found in the uploaded build.')],
+          why: 'Apple expects apps to declare data collection and Required Reason API usage in a privacy manifest.',
+          action: 'Add a PrivacyInfo.xcprivacy file to the app target and declare collected data types plus Required Reason APIs you actually use (for example UserDefaults).',
+          verify: 'In Xcode, confirm PrivacyInfo.xcprivacy is in the app target’s Copy Bundle Resources.'
+        };
+      }
+      if (inspection.privacyManifest.accessedApiTypes.length === 0) {
+        return {
+          triggered: true,
+          severity: 'MEDIUM',
+          evidence: [evidence('NSPrivacyAccessedAPITypes', 'PrivacyInfo.xcprivacy', 'DETECTED', 'A privacy manifest is present, but no Required Reason API types were declared.')],
+          why: 'Most apps use UserDefaults or file timestamps. An empty Required Reason API list often causes validation warnings.',
+          action: 'Declare only the Required Reason APIs your app actually uses, with the matching reason codes.',
+          verify: 'Search the project for UserDefaults, file timestamps, disk space, and system boot time APIs.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-PRIV-02': {
+      const url = inspection.metadata.privacyPolicyUrl?.trim() || '';
+      if (!inspection.metadata.listingProvided && !url) {
+        return {
+          triggered: true,
+          severity: 'MANUAL_CHECK',
+          evidence: [evidence('privacyPolicyUrl', 'Submission info', 'UNKNOWN', 'No App Store listing privacy URL was provided with this check.')],
+          why: 'Apps that collect data or offer accounts need a live HTTPS privacy policy in App Store Connect and usually in-app.',
+          action: 'Add your privacy policy HTTPS URL on the next check (or in App Store Connect) and confirm the page loads.',
+          verify: 'Open the URL in a browser and confirm it describes this app’s data use.'
+        };
+      }
+      if (!url || !url.startsWith('https://')) {
+        return {
+          triggered: true,
+          evidence: [evidence('privacyPolicyUrl', 'App Store listing info', url ? 'DETECTED' : 'NOT_DETECTED', url ? 'URL is missing https://' : 'No privacy policy URL was provided.', url || '(none)')],
+          why: 'Apple expects a publicly reachable HTTPS privacy policy for submissions that collect data or use accounts.',
+          action: 'Set a live https:// privacy policy URL in App Store Connect and in the app if you collect data.',
+          verify: 'Visit the URL and confirm it is not a placeholder or 404.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-PRIV-03': {
+      const att = inspection.permissions.find(p => p.key === 'NSUserTrackingUsageDescription');
+      if (inspection.features.hasAdvertising || inspection.privacyManifest.trackingEnabled) {
+        if (!att?.detected || !att.description.trim()) {
+          return {
+            triggered: true,
+            evidence: [evidence('NSUserTrackingUsageDescription', 'Info.plist', 'NOT_DETECTED', 'Tracking or ads were detected, but the App Tracking Transparency purpose string is missing or empty.')],
+            why: 'If the app tracks users across apps or sites, Apple expects an ATT prompt with a clear purpose string.',
+            action: 'Add NSUserTrackingUsageDescription that names the feature using tracking, or remove tracking/ad SDKs if you do not track.',
+            verify: 'Confirm whether AdMob, AppsFlyer, or IDFA tracking is actually used.'
+          };
+        }
+      }
+      return empty;
+    }
+
+    case 'RULE-PERM-01': {
+      const weak = inspection.permissions.filter(p => {
+        if (!p.detected) return false;
+        const desc = p.description.trim();
+        return desc.length < 15 || /^(needed|required|app requires|functionality|camera access|location)$/i.test(desc);
+      });
+      if (weak.length === 0) return empty;
+      return {
+        triggered: true,
+        evidence: weak.map(p => evidence(p.key, 'Info.plist', 'DETECTED', 'Purpose string is missing, too short, or too generic.', p.description || '(empty)')),
+        why: 'Users must understand why the app needs a sensitive permission. Vague text is a common rejection reason.',
+        action: 'Rewrite each flagged purpose string so it names the exact in-app feature that uses that permission.',
+        verify: 'Read each string as if you were a first-time user seeing the system prompt.'
+      };
+    }
+
+    case 'RULE-PERM-02': {
+      const alwaysLoc = inspection.permissions.find(p => p.key === 'NSLocationAlwaysAndWhenInUseUsageDescription');
+      const hasBgLoc = inspection.backgroundModes.includes('location');
+      if (alwaysLoc?.detected && !hasBgLoc) {
+        return {
+          triggered: true,
+          evidence: [evidence('NSLocationAlwaysAndWhenInUseUsageDescription', 'Info.plist', 'DETECTED', 'Always location is requested without a location background mode.')],
+          why: 'Always location without a clear background use (navigation, geofencing) is often considered excessive.',
+          action: 'Switch to When In Use if that is enough, or only keep Always location if you truly need background location and can explain it.',
+          verify: 'List the user-facing feature that needs location when the app is not on screen.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-ACC-01': {
+      const hasAccounts = inspection.features.hasThirdPartyAuth || inspection.features.hasSignInWithApple;
+      if (!hasAccounts) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('Account deletion', 'App UI (not visible in the build scan)', 'UNKNOWN', 'Sign-in related signals were found. Whether account deletion exists in the UI cannot be verified from this upload.')],
+        why: 'If people can create an account, Apple expects a way to delete the account and associated data from inside the app.',
+        action: 'Add a clear Delete Account flow in settings (not only an email link), and confirm it actually deletes the account.',
+        verify: 'Sign in, open settings, and complete deletion on a test account.'
+      };
+    }
+
+    case 'RULE-ACC-02': {
+      if (inspection.features.hasThirdPartyAuth && !inspection.features.hasSignInWithApple) {
+        return {
+          triggered: true,
+          evidence: [evidence('Third-party login', 'Frameworks / URL schemes', 'DETECTED', 'Google or Facebook login signals were found without Sign in with Apple.', inspection.frameworks.filter(f => /Google|Facebook/i.test(f)))],
+          why: 'If the app uses a third-party social login, Apple also expects Sign in with Apple as an equivalent option.',
+          action: 'Add Sign in with Apple next to the other social login buttons, using AuthenticationServices.',
+          verify: 'Open the login screen and confirm Apple appears as a first-class option.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-ACC-03': {
+      if (!(inspection.features.hasThirdPartyAuth || inspection.features.hasSignInWithApple)) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('Login gate', 'App launch flow', 'UNKNOWN', 'The app appears to support accounts. Whether core features work without signing in cannot be determined from the binary scan.')],
+        why: 'Apple often rejects apps that force account creation before the user can try features that do not need an account.',
+        action: 'Allow browsing or using core utility features without an account, and only require sign-in for sync, cloud, or personal data.',
+        verify: 'Fresh-install the app and see what is usable before any login.'
+      };
+    }
+
+    case 'RULE-IAP-01': {
+      if (inspection.features.hasExternalPayments) {
+        return {
+          triggered: true,
+          evidence: [evidence('Stripe', 'Embedded frameworks', 'DETECTED', 'A Stripe SDK was found. Digital goods generally must use In-App Purchase, not an external checkout.')],
+          why: 'Charging for digital features through an external paywall (instead of StoreKit) is a common Guideline 3.1.1 rejection.',
+          action: 'Sell digital unlocks and subscriptions with StoreKit, or confirm you qualify for a rare exception (for example some reader apps) and document it.',
+          verify: 'Walk through every purchase path in the app and list which ones are digital vs physical/real-world.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-SUB-01': {
+      if (!(inspection.features.hasInAppPurchases || inspection.features.hasSubscriptions)) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('StoreKit / IAP', 'Frameworks', 'DETECTED', 'In-app purchase libraries were found. A Restore Purchases control cannot be confirmed from this scan.', inspection.frameworks.filter(f => /StoreKit|RevenueCat/i.test(f)))],
+        why: 'Paywalls for non-consumable purchases and subscriptions are expected to let users restore previous purchases.',
+        action: 'Put a working Restore Purchases control on the paywall and in settings, and test it in sandbox.',
+        verify: 'Buy on one install, restore on another sandbox account/device.'
+      };
+    }
+
+    case 'RULE-SUB-02': {
+      if (!(inspection.features.hasInAppPurchases || inspection.features.hasSubscriptions)) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('Paywall legal links', 'Subscription / paywall UI', 'UNKNOWN', 'Purchases appear possible. Terms and privacy links on the paywall cannot be seen from this scan.')],
+        why: 'Subscription purchase screens are expected to show working Terms of Use and Privacy Policy links.',
+        action: 'Add Terms of Use (or Apple’s standard EULA) and Privacy Policy links on the paywall, near the purchase button.',
+        verify: 'Open the paywall and tap both links.'
+      };
+    }
+
+    case 'RULE-UGC-01': {
+      if (!inspection.features.hasUserGeneratedContent) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('User-generated content', 'App category / features', 'UNKNOWN', 'This listing looks like it may include user content (for example a social category). Moderation tools cannot be verified automatically.')],
+        why: 'Feeds, chat, comments, or user uploads generally need reporting, blocking, and filtering of objectionable content.',
+        action: 'Add report and block actions on user content, plus filtering and a way to contact you about abuse.',
+        verify: 'Create two test accounts and walk through report and block.'
+      };
+    }
+
+    case 'RULE-COMP-01': {
+      const needsLogin = inspection.features.hasThirdPartyAuth || inspection.features.hasSignInWithApple;
+      const notes = inspection.metadata.reviewerNotes?.trim() || '';
+      if (!needsLogin) return empty;
+      if (notes.length < 8) {
+        return {
+          triggered: true,
+          severity: 'MANUAL_CHECK',
+          evidence: [evidence('Reviewer notes', 'Submission info', 'NOT_DETECTED', 'The app appears to have a login, but no demo credentials were included with this check.')],
+          why: 'If App Review cannot reach the core features without an account, they need a working demo login in Review Information.',
+          action: 'Create a durable test account, put username and password in App Store Connect Review Information, and include any 2FA bypass steps.',
+          verify: 'Log in with those credentials on a clean install before you submit.'
+        };
+      }
+      return empty;
+    }
+
+    case 'RULE-COMP-02': {
+      const haystack = [
+        inspection.metadata.name,
+        inspection.metadata.subtitle,
+        inspection.metadata.description,
+        inspection.metadata.keywords,
+        ...(Array.isArray(inspection.rawInfo?.flattenedStrings) ? inspection.rawInfo.flattenedStrings as string[] : [])
+      ].join(' ');
+      const match = haystack.match(/lorem ipsum|todo:|placeholder|test title|example\.com\/privacy/i);
+      if (!match) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('Placeholder copy', 'Listing / Info.plist strings', 'DETECTED', 'Placeholder or draft text was found.', match[0])],
+        why: 'Placeholder copy, lorem ipsum, or unfinished screens make the submission look incomplete.',
+        action: 'Replace draft strings and sample URLs with the real production copy and live links.',
+        verify: 'Search the project and listing for lorem, TODO, placeholder, and example.com.'
+      };
+    }
+
+    case 'RULE-META-01': {
+      const meta = inspection.metadata;
+      if (!meta.listingProvided && !meta.name && !meta.subtitle && !meta.description) {
+        return {
+          triggered: true,
+          severity: 'MANUAL_CHECK',
+          evidence: [evidence('App Store listing', 'Submission info', 'UNKNOWN', 'Title, subtitle, description, and keywords were not included with this check.')],
+          why: 'Listing fields have hard character limits and must match what the app actually does.',
+          action: 'Paste your App Store name, subtitle, description, and keywords into the next check.',
+          verify: 'Compare App Store Connect fields with the strings you intend to ship.'
+        };
+      }
+      const issues: string[] = [];
+      if (meta.name && meta.name.length > 30) issues.push(`Name is ${meta.name.length} characters (max 30)`);
+      if (meta.subtitle && meta.subtitle.length > 30) issues.push(`Subtitle is ${meta.subtitle.length} characters (max 30)`);
+      if (meta.keywords && meta.keywords.length > 100) issues.push(`Keywords are ${meta.keywords.length} characters (max 100)`);
+      if (issues.length === 0) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('Listing length', 'App Store listing info', 'DETECTED', issues.join('; '), issues)],
+        why: 'App Store Connect rejects names and subtitles over 30 characters and keywords over 100.',
+        action: 'Shorten the flagged fields so they fit the limits.',
+        verify: 'Count characters in App Store Connect, not only in a notes app.'
+      };
+    }
+
+    case 'RULE-META-02': {
+      const desc = `${inspection.metadata.description || ''} ${inspection.metadata.keywords || ''}`;
+      const match = desc.match(/\b(android|google play|play store|apk|windows phone)\b/i);
+      if (!match) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('Competitor mention', 'Description / keywords', 'DETECTED', `Mentioned "${match[0]}" in listing text.`, match[0])],
+        why: 'Pointing to other stores or platforms in the App Store listing is not allowed.',
+        action: 'Remove Android, Google Play, APK, and similar mentions from the description and keywords.',
+        verify: 'Search the full listing copy for those words.'
+      };
+    }
+
+    case 'RULE-META-03': {
+      const text = `${inspection.metadata.name || ''} ${inspection.metadata.subtitle || ''}`;
+      const match = text.match(/\b(#1|number one|best|free|top-rated|\$\d)\b/i);
+      if (!match) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('Name / subtitle claim', 'App Store listing info', 'DETECTED', `Possible ranking or pricing claim: "${match[0]}".`, match[0])],
+        why: 'Names and subtitles should not include unproven rankings, “free” pricing claims, or similar marketing superlatives.',
+        action: 'Describe what the app does instead of calling it #1, best, or free in the name/subtitle.',
+        verify: 'Read the name and subtitle as they will appear on the store card.'
+      };
+    }
+
+    case 'RULE-SHOT-01': {
+      if (!inspection.screenshots.length) {
+        return {
+          triggered: true,
+          severity: 'MANUAL_CHECK',
+          evidence: [evidence('Screenshots', 'Submission assets', 'UNKNOWN', 'No screenshots were included with this check.')],
+          why: 'App Store Connect requires screenshots at exact device sizes. Wrong sizes block submission.',
+          action: 'Export screenshots at a required size (for example 1320×2868 or 1290×2796) and attach them on the next check.',
+          verify: 'Check pixel dimensions in Preview or the Finder Get Info panel.'
+        };
+      }
+      const invalid = inspection.screenshots.filter(shot => !shot.isValidSize);
+      if (invalid.length === 0) return empty;
+      return {
+        triggered: true,
+        evidence: invalid.map(shot => evidence(shot.name, 'Screenshot assets', 'DETECTED', `Size ${shot.width}×${shot.height} is not a required App Store dimension.`, `${shot.width}x${shot.height}`)),
+        why: 'Screenshots must match Apple’s listed pixel sizes for the device class you are submitting.',
+        action: 'Re-export the flagged images at an official size. Do not stretch or pad with empty canvas.',
+        verify: 'Compare each file to Apple’s screenshot specifications.'
+      };
+    }
+
+    case 'RULE-BG-01': {
+      if (inspection.backgroundModes.length === 0) return empty;
+      return {
+        triggered: true,
+        severity: 'MANUAL_CHECK',
+        evidence: [evidence('UIBackgroundModes', 'Info.plist', 'DETECTED', `Declared: ${inspection.backgroundModes.join(', ')}. Whether each mode is user-facing cannot be proven from the scan.`, inspection.backgroundModes)],
+        why: 'Background modes must match a real user feature (audio, navigation, VoIP, and so on). Unused modes get flagged.',
+        action: 'Remove any background mode you do not actually use. For each remaining mode, be ready to explain the feature to App Review.',
+        verify: 'Turn the feature off in code and confirm the matching mode is also removed from Info.plist.'
+      };
+    }
+
+    case 'RULE-SEC-01': {
+      if (inspection.security.usesNonExemptEncryptionDeclared) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('ITSAppUsesNonExemptEncryption', 'Info.plist', 'NOT_DETECTED', 'Export compliance key is missing. App Store Connect will ask about encryption on every upload.')],
+        why: 'If you only use standard HTTPS / system encryption, declaring this key avoids a repeated compliance question.',
+        action: 'Add ITSAppUsesNonExemptEncryption = false unless you use non-exempt encryption.',
+        verify: 'Confirm you are not using custom crypto beyond HTTPS and Apple’s APIs.'
+      };
+    }
+
+    case 'RULE-SEC-02': {
+      if (!inspection.security.atsAllowsArbitraryLoads) return empty;
+      return {
+        triggered: true,
+        evidence: [evidence('NSAllowsArbitraryLoads', 'Info.plist → NSAppTransportSecurity', 'DETECTED', 'Arbitrary loads are enabled, which allows insecure HTTP.')],
+        why: 'Open ATS exceptions are hard to justify. Reviewers expect HTTPS unless a specific domain needs an exception.',
+        action: 'Turn off NSAllowsArbitraryLoads and use HTTPS, or limit exceptions to named domains you can explain.',
+        verify: 'Load every API on HTTPS in a production build.'
+      };
+    }
+
+    default:
+      return empty;
+  }
+}
 
 export function evaluateInspection(
   inspection: NormalizedAppInspection,
@@ -16,358 +405,83 @@ export function evaluateInspection(
   appVersion: string,
   existingFindings: Finding[] = []
 ): AuditRun {
-  const auditId = `audit_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const auditId = `audit_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const findings: Finding[] = [];
-
-  // Map existing findings status if re-running
+  const passedChecks: { ruleId: string; title: string }[] = [];
   const existingStatusMap = new Map<string, Finding>();
   existingFindings.forEach(f => existingStatusMap.set(f.ruleId, f));
 
   for (const rule of APP_STORE_RULES) {
     if (!rule.enabled) continue;
-
-    let isTriggered = false;
-    let evidenceItems: FindingEvidence[] = [];
-    let customWhy = rule.description;
-    let customAction = rule.remediationGuidance;
-    let customVerify = 'Review your project configuration in Xcode.';
-
-    switch (rule.id) {
-      // 1. Privacy Manifest
-      case 'RULE-PRIV-01':
-        if (!inspection.privacyManifest.hasPrivacyManifest) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'PrivacyInfo.xcprivacy',
-            location: 'App Root / Resources',
-            detectionStatus: 'NOT_DETECTED',
-            notes: 'No PrivacyInfo.xcprivacy manifest file found in app target bundle.'
-          });
-          customWhy = 'Apple requires all apps and major SDKs to include a Privacy Manifest declaring Required Reason APIs (like UserDefaults, FileTimestamps) and data collection.';
-          customVerify = 'Verify whether your project includes a PrivacyInfo.xcprivacy resource target.';
-        } else if (
-          inspection.privacyManifest.accessedApiTypes.length === 0 &&
-          (inspection.frameworks.length > 0 || inspection.bundleId)
-        ) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'NSPrivacyAccessedAPITypes',
-            location: 'PrivacyInfo.xcprivacy',
-            detectionStatus: 'DETECTED',
-            notes: 'PrivacyInfo.xcprivacy is present but has empty NSPrivacyAccessedAPITypes array.'
-          });
-          customWhy = 'Most apps utilize UserDefaults or disk caches. Declaring CA92.1 reason code is required to avoid App Store validation warnings.';
-          customVerify = 'Check if standard APIs like UserDefaults or FileSystem are used in your codebase.';
-        }
-        break;
-
-      // 2. Privacy Policy URL
-      case 'RULE-PRIV-02':
-        const privUrl = inspection.metadata.privacyPolicyUrl;
-        if (!privUrl || privUrl.trim() === '' || !privUrl.startsWith('https://')) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'privacyPolicyUrl',
-            extractedValue: privUrl || '(None provided)',
-            location: 'App Store Metadata',
-            detectionStatus: privUrl ? 'DETECTED' : 'NOT_DETECTED',
-            notes: privUrl ? 'URL does not use secure HTTPS protocol.' : 'Missing Privacy Policy URL.'
-          });
-          customWhy = 'App Store Review requires a publicly accessible HTTPS Privacy Policy URL for all submissions.';
-          customVerify = 'Ensure your Privacy Policy URL is live, reachable, and served over HTTPS.';
-        }
-        break;
-
-      // 3. ATT / Ad Tracking
-      case 'RULE-PRIV-03':
-        const attPermission = inspection.permissions.find(p => p.key === 'NSUserTrackingUsageDescription');
-        if (inspection.features.hasAdvertising || inspection.privacyManifest.trackingEnabled) {
-          if (!attPermission || !attPermission.detected || !attPermission.description || attPermission.description.trim().length < 5) {
-            isTriggered = true;
-            evidenceItems.push({
-              key: 'NSUserTrackingUsageDescription',
-              extractedValue: attPermission?.description || '(Missing)',
-              location: 'Info.plist',
-              detectionStatus: attPermission?.detected ? 'DETECTED' : 'NOT_DETECTED',
-              notes: 'Tracking / Ad SDKs detected but missing explicit ATT purpose string.'
-            });
-            customWhy = 'If your app tracks users across other apps or uses AdMob/AppsFlyer, AppTrackingTransparency authorization is mandatory with a descriptive prompt.';
-            customVerify = 'Confirm whether your app tracks user activity across third-party apps.';
-          }
-        }
-        break;
-
-      // 4. Permission strings in Info.plist
-      case 'RULE-PERM-01':
-        const detectedPermsWithIssues = inspection.permissions.filter(p => {
-          if (!p.detected) return false;
-          // Flag if empty or very short generic string
-          const desc = p.description.trim();
-          return desc.length < 15 || /^(needed|required|app requires|functionality|camera access|location)$/i.test(desc);
-        });
-
-        if (detectedPermsWithIssues.length > 0) {
-          isTriggered = true;
-          detectedPermsWithIssues.forEach(p => {
-            evidenceItems.push({
-              key: p.key,
-              extractedValue: p.description || '(Empty)',
-              location: 'Info.plist',
-              detectionStatus: 'DETECTED',
-              notes: `Usage string "${p.description}" is too generic or short (< 15 chars).`
-            });
-          });
-          customWhy = 'Apple App Review automatically rejects apps with vague or terse permission descriptions because users must know exactly why hardware access is requested.';
-          customVerify = 'Verify purpose strings in Xcode Info.plist to ensure they describe the exact user feature.';
-        }
-        break;
-
-      // 5. Always Location
-      case 'RULE-PERM-02':
-        const alwaysLoc = inspection.permissions.find(p => p.key === 'NSLocationAlwaysAndWhenInUseUsageDescription');
-        const hasBgLoc = inspection.backgroundModes.includes('location');
-        if (alwaysLoc && alwaysLoc.detected && !hasBgLoc) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'NSLocationAlwaysAndWhenInUseUsageDescription',
-            location: 'Info.plist',
-            detectionStatus: 'DETECTED',
-            notes: 'Always Location requested without UIBackgroundModes "location" capability declared.'
-          });
-          customWhy = 'Requesting "Always" location access without continuous background navigation or geofencing is considered excessive by Apple.';
-          customVerify = 'Confirm if When-In-Use location is sufficient for your app features.';
-        }
-        break;
-
-      // 6. Account Deletion
-      case 'RULE-ACC-01':
-        if (inspection.features.hasThirdPartyAuth || inspection.features.hasSignInWithApple || inspection.features.hasUserGeneratedContent) {
-          if (!inspection.features.hasAccountDeletion) {
-            isTriggered = true;
-            evidenceItems.push({
-              key: 'Account Deletion Mechanism',
-              location: 'App User Settings / API',
-              detectionStatus: 'NOT_DETECTED',
-              notes: 'App supports user accounts/auth, but in-app account deletion flow has not been verified.'
-            });
-            customWhy = 'Guideline 5.1.1(v) requires that any app offering account creation must also offer account deletion within the app itself.';
-            customVerify = 'Confirm your app has a functioning "Delete Account" button in account settings that purges user data.';
-          }
-        }
-        break;
-
-      // 7. Sign in with Apple
-      case 'RULE-ACC-02':
-        if (inspection.features.hasThirdPartyAuth && !inspection.features.hasSignInWithApple) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'ThirdPartyAuth Frameworks',
-            extractedValue: inspection.frameworks.filter(f => f.includes('Google') || f.includes('Facebook')),
-            location: 'Frameworks / Binary',
-            detectionStatus: 'DETECTED',
-            notes: 'Third-party social login detected without Sign in with Apple entitlement or framework.'
-          });
-          customWhy = 'Guideline 4.8 dictates that apps using third-party social logins (Google, Facebook, Twitter) must also provide Sign in with Apple.';
-          customVerify = 'Check if your login screen offers Sign in with Apple alongside other social auth providers.';
-        }
-        break;
-
-      // 8. Restore Purchases
-      case 'RULE-SUB-01':
-        if (inspection.features.hasSubscriptions || inspection.features.hasInAppPurchases) {
-          // If subscription/IAP detected, flag check for restore purchases button
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'In-App Purchases / StoreKit',
-            extractedValue: inspection.frameworks.filter(f => f.includes('StoreKit') || f.includes('RevenueCat')),
-            location: 'Paywall & In-App Purchase logic',
-            detectionStatus: 'DETECTED',
-            notes: 'StoreKit detected. Apple requires a functioning Restore Purchases button on all paywalls.'
-          });
-          customWhy = 'Guideline 3.1.2 mandates that paywall screens must include a "Restore Purchases" button to allow users to recover previous transactions.';
-          customVerify = 'Verify that your paywall UI has a visible and testable "Restore Purchases" button.';
-        }
-        break;
-
-      // 9. UGC Moderation
-      case 'RULE-UGC-01':
-        if (inspection.features.hasUserGeneratedContent) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'User-Generated Content',
-            location: 'Social / Feed / Chat',
-            detectionStatus: 'DETECTED',
-            notes: 'UGC features detected. Requires user block, content report, and EULA mechanisms.'
-          });
-          customWhy = 'Guideline 1.2 requires an explicit EULA, content reporting system, and user-blocking mechanism for any user-generated content.';
-          customVerify = 'Confirm your chat/post views include Report and Block actions.';
-        }
-        break;
-
-      // 10. Metadata Character Limits
-      case 'RULE-META-01':
-        const meta = inspection.metadata;
-        const metaIssues: string[] = [];
-        if (meta.name && meta.name.length > 30) metaIssues.push(`App Name is ${meta.name.length} chars (Max 30)`);
-        if (meta.subtitle && meta.subtitle.length > 30) metaIssues.push(`Subtitle is ${meta.subtitle.length} chars (Max 30)`);
-        if (meta.keywords && meta.keywords.length > 100) metaIssues.push(`Keywords string is ${meta.keywords.length} chars (Max 100)`);
-
-        if (metaIssues.length > 0) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'Metadata Limits',
-            extractedValue: metaIssues,
-            location: 'App Store Metadata',
-            detectionStatus: 'DETECTED',
-            notes: metaIssues.join(', ')
-          });
-          customWhy = 'App Store Connect will reject submissions where title or subtitle exceeds the 30-character hard limit.';
-          customVerify = 'Shorten your App Name or Subtitle in App Store Connect.';
-        }
-        break;
-
-      // 11. Competitor platform mentions in description
-      case 'RULE-META-02':
-        const desc = (inspection.metadata.description || '') + ' ' + (inspection.metadata.keywords || '');
-        const competitorRegex = /\b(android|google play|play store|apk|windows phone)\b/i;
-        const compMatch = desc.match(competitorRegex);
-        if (compMatch) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'Competitor Mention',
-            extractedValue: compMatch[0],
-            location: 'App Description / Keywords',
-            detectionStatus: 'DETECTED',
-            notes: `Mentioned "${compMatch[0]}" in metadata.`
-          });
-          customWhy = 'Guideline 2.3 strictly forbids referencing competitor platforms or other app stores in metadata.';
-          customVerify = 'Remove any mention of Android or Google Play from your description copy.';
-        }
-        break;
-
-      // 12. Unjustified Background Modes
-      case 'RULE-BG-01':
-        if (inspection.backgroundModes.length > 0) {
-          // If background modes are present, flag for verification
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'UIBackgroundModes',
-            extractedValue: inspection.backgroundModes,
-            location: 'Info.plist',
-            detectionStatus: 'DETECTED',
-            notes: `Declared background modes: ${inspection.backgroundModes.join(', ')}`
-          });
-          customWhy = 'Apple strictly audits background execution modes. Audio, Location, and VOIP modes require explicit active user justifications in App Review notes.';
-          customVerify = 'Ensure each declared UIBackgroundMode corresponds to active features like continuous audio or turn-by-turn navigation.';
-        }
-        break;
-
-      // 13. ATS Arbitrary Loads
-      case 'RULE-SEC-02':
-        if (inspection.security.atsAllowsArbitraryLoads) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'NSAllowsArbitraryLoads',
-            location: 'Info.plist -> NSAppTransportSecurity',
-            detectionStatus: 'DETECTED',
-            notes: 'NSAllowsArbitraryLoads is set to true (Allows insecure HTTP).'
-          });
-          customWhy = 'Guideline 5.0 enforces HTTPS by default. Arbitrary loads exception without detailed justification will be flagged.';
-          customVerify = 'Switch API calls to HTTPS and use NSExceptionDomains only for specific required domains.';
-        }
-        break;
-
-      // 14. Non-Exempt Encryption Declared
-      case 'RULE-SEC-01':
-        if (!inspection.security.usesNonExemptEncryptionDeclared) {
-          isTriggered = true;
-          evidenceItems.push({
-            key: 'ITSAppUsesNonExemptEncryption',
-            location: 'Info.plist',
-            detectionStatus: 'NOT_DETECTED',
-            notes: 'ITSAppUsesNonExemptEncryption key is missing in Info.plist.'
-          });
-          customWhy = 'Missing this key causes App Store Connect to prompt for export compliance on every new build upload.';
-          customVerify = 'Add <key>ITSAppUsesNonExemptEncryption</key><false/> to Info.plist.';
-        }
-        break;
-
-      default:
-        break;
+    const result = evaluateRule(rule.id, inspection, rule.description, rule.remediationGuidance);
+    if (!result.triggered) {
+      passedChecks.push({ ruleId: rule.id, title: rule.title });
+      continue;
     }
 
-    if (isTriggered) {
-      // Check if previous finding exists
-      const existing = existingStatusMap.get(rule.id);
+    const existing = existingStatusMap.get(rule.id);
+    const severity = result.severity || rule.severity;
+    const stillOpen = severity === 'MANUAL_CHECK' ? 'MANUAL_REVIEW' : 'OPEN';
 
-      findings.push({
-        id: existing?.id || `finding_${rule.id}_${Math.random().toString(36).substr(2, 5)}`,
-        auditId,
-        ruleId: rule.id,
-        category: rule.category,
-        guidelineRef: typeof rule.guidelineRef === 'object' 
-          ? rule.guidelineRef 
-          : {
-              number: rule.guidelineRef,
-              title: rule.title,
-              url: rule.sourceUrl || 'https://developer.apple.com/app-store/review/guidelines/'
-            },
-        title: rule.title,
-        severity: rule.severity,
-        whyItMatters: customWhy,
-        evidence: evidenceItems,
-        whatToVerify: customVerify,
-        recommendedAction: customAction,
-        codeSnippet: rule.codeSnippet,
-        confidence: rule.confidence,
-        status: existing?.status || 'OPEN',
-        notes: existing?.notes || [],
-        createdAt: existing?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        fixedInBuild: existing?.fixedInBuild
-      });
-    }
+    findings.push({
+      id: existing?.id || `finding_${rule.id}_${Math.random().toString(36).slice(2, 7)}`,
+      auditId,
+      ruleId: rule.id,
+      category: rule.category,
+      guidelineRef: typeof rule.guidelineRef === 'object'
+        ? rule.guidelineRef
+        : {
+            number: rule.guidelineRef,
+            title: rule.title,
+            url: rule.sourceUrl || 'https://developer.apple.com/app-store/review/guidelines/'
+          },
+      title: rule.title,
+      severity,
+      whyItMatters: result.why,
+      evidence: result.evidence,
+      whatToVerify: result.verify,
+      recommendedAction: result.action,
+      codeSnippet: rule.codeSnippet,
+      confidence: rule.confidence,
+      status: stillOpen,
+      notes: existing?.notes || [],
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
   }
 
-  // Calculate severity counts
+  const severityRank: Record<AuditSeverity, number> = { HIGH: 0, MEDIUM: 1, LOW: 2, MANUAL_CHECK: 3 };
+  findings.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
+
   let highCount = 0;
   let medCount = 0;
   let lowCount = 0;
-  let infoCount = 0;
+  let manualCount = 0;
   let openCount = 0;
   let resolvedCount = 0;
 
   findings.forEach(f => {
-    if (f.status === 'OPEN' || f.status === 'IN_PROGRESS') {
-      openCount++;
-      if (f.severity === 'HIGH') highCount++;
-      if (f.severity === 'MEDIUM') medCount++;
-      if (f.severity === 'LOW') lowCount++;
-      if (f.severity === 'INFO') infoCount++;
-    } else if (f.status === 'FIXED') {
+    if (f.status === 'FIXED' || f.status === 'WONT_FIX') {
       resolvedCount++;
+      return;
     }
+    openCount++;
+    if (f.severity === 'HIGH') highCount++;
+    if (f.severity === 'MEDIUM') medCount++;
+    if (f.severity === 'LOW') lowCount++;
+    if (f.severity === 'MANUAL_CHECK') manualCount++;
   });
 
-  // Calculate overall readiness status
-  let readinessStatus: ReadinessStatus = 'READY';
-  if (highCount > 0) {
-    readinessStatus = 'HIGH_RISK';
-  } else if (medCount > 0) {
-    readinessStatus = 'READY_WITH_WARNINGS';
-  } else if (findings.some(f => f.status === 'MANUAL_REVIEW')) {
-    readinessStatus = 'MANUAL_REVIEW_REQUIRED';
-  } else if (openCount > 0) {
-    readinessStatus = 'READY_WITH_WARNINGS';
-  } else {
-    readinessStatus = 'READY';
-  }
+  const readinessStatus = computeReadiness(findings);
+  const copy = readinessCopy(readinessStatus);
+  const summary = `${copy.summaryHint} ${highCount} high, ${medCount} medium, ${lowCount} low, ${manualCount} manual check${manualCount === 1 ? '' : 's'}. ${passedChecks.length} check${passedChecks.length === 1 ? '' : 's'} looked clear in this run.`;
 
-  const summary = highCount > 0 
-    ? `Identified ${highCount} high-risk item(s) and ${medCount} warning(s) that require developer action before submission.`
-    : medCount > 0 
-    ? `No critical blockers detected. ${medCount} guideline warning(s) recommended for manual verification.`
-    : `Your app currently has no detected high-risk issues based on the checks performed. Review final manual checklist before submitting.`;
+  const siwaLine = inspection.features.hasSignInWithApple
+    ? '- Sign in with Apple appears to be present in the build scan.'
+    : '- Sign in with Apple was not detected in this scan.';
+  const privacyLine = inspection.metadata.privacyPolicyUrl
+    ? `- Privacy Policy: ${inspection.metadata.privacyPolicyUrl}`
+    : '- Privacy Policy URL: not provided with this check.';
 
   return {
     id: auditId,
@@ -376,7 +490,7 @@ export function evaluateInspection(
     appVersion,
     createdAt: new Date().toISOString(),
     readinessStatus,
-    ruleVersion: '2026.2',
+    ruleVersion: '2026.2-phase-a',
     summary,
     totalFindings: findings.length,
     openFindings: openCount,
@@ -384,15 +498,16 @@ export function evaluateInspection(
     highRiskCount: highCount,
     mediumRiskCount: medCount,
     lowRiskCount: lowCount,
-    infoCount: infoCount,
+    manualCheckCount: manualCount,
+    infoCount: manualCount,
     findings,
-    reviewerNotesDraft: `App Version: ${appVersion} (Build ${buildNumber})\n\nTest Notes for App Review:\n- All features testable in sandbox/demo mode.\n- Sign in with Apple provided.\n- Privacy Policy: ${inspection.metadata.privacyPolicyUrl || 'https://yourdomain.com/privacy'}\n- Support: ${inspection.metadata.supportUrl || 'https://yourdomain.com/support'}`
+    passedChecks,
+    reviewerNotesDraft: inspection.metadata.reviewerNotes?.trim()
+      ? inspection.metadata.reviewerNotes
+      : `App Version: ${appVersion} (Build ${buildNumber})\n\nNotes for App Review:\n${siwaLine}\n${privacyLine}\n- Support: ${inspection.metadata.supportUrl || '(not provided)'}`
   };
 }
 
-/**
- * Compares two audit runs to show resolved, remaining, and new findings
- */
 export function compareAudits(previousAudit: AuditRun, currentAudit: AuditRun): AuditComparison {
   const prevRuleMap = new Map(previousAudit.findings.map(f => [f.ruleId, f]));
   const currRuleMap = new Map(currentAudit.findings.map(f => [f.ruleId, f]));
@@ -401,20 +516,18 @@ export function compareAudits(previousAudit: AuditRun, currentAudit: AuditRun): 
   const remainingFindings: Finding[] = [];
   const newFindings: Finding[] = [];
 
-  // Check what was in prev but resolved or absent in curr
   previousAudit.findings.forEach(prevFinding => {
     const currFinding = currRuleMap.get(prevFinding.ruleId);
-    if (!currFinding || currFinding.status === 'FIXED') {
+    if (!currFinding) {
       resolvedFindings.push(prevFinding);
     }
   });
 
-  // Check current findings
   currentAudit.findings.forEach(currFinding => {
     const prevFinding = prevRuleMap.get(currFinding.ruleId);
     if (!prevFinding) {
       newFindings.push(currFinding);
-    } else if (currFinding.status !== 'FIXED') {
+    } else {
       remainingFindings.push(currFinding);
     }
   });
@@ -433,20 +546,20 @@ export function compareAudits(previousAudit: AuditRun, currentAudit: AuditRun): 
   };
 }
 
-/**
- * Calculates a 0-100% readiness score based on open finding severities
- */
 export function calculateReadinessScore(audit?: AuditRun | null): number {
   if (!audit) return 0;
   if (!audit.findings || audit.findings.length === 0) return 100;
-  
-  const openFindings = audit.findings.filter(f => f.status !== 'FIXED');
+
+  const openFindings = audit.findings.filter(f => f.status !== 'FIXED' && f.status !== 'WONT_FIX' && f.severity !== 'MANUAL_CHECK');
   if (openFindings.length === 0) return 100;
 
   const high = openFindings.filter(f => f.severity === 'HIGH').length;
   const medium = openFindings.filter(f => f.severity === 'MEDIUM').length;
   const low = openFindings.filter(f => f.severity === 'LOW').length;
-
   const penalty = (high * 25) + (medium * 10) + (low * 5);
   return Math.max(0, Math.min(100, 100 - penalty));
+}
+
+export function isValidScreenshotSize(width: number, height: number): boolean {
+  return isValidAppStoreScreenshotSize(width, height);
 }

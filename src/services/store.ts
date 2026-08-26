@@ -10,7 +10,7 @@ import {
   AuditComparison,
   RuleCategory
 } from '../types';
-import { evaluateInspection, compareAudits } from '../engine/evaluator';
+import { evaluateInspection, compareAudits, computeReadiness } from '../engine/evaluator';
 import { apiClient } from './api';
 
 const STORAGE_KEYS = {
@@ -51,9 +51,13 @@ class AppStore {
 
       const savedApps = localStorage.getItem(STORAGE_KEYS.APPS);
       this.apps = savedApps ? JSON.parse(savedApps) : [];
+      this.apps = this.apps.map(app => ({
+        ...app,
+        lastAuditStatus: this.migrateReadiness(app.lastAuditStatus)
+      }));
 
       const savedAudits = localStorage.getItem(STORAGE_KEYS.AUDITS);
-      this.auditsMap = savedAudits ? JSON.parse(savedAudits) : {};
+      this.auditsMap = savedAudits ? this.migrateAudits(JSON.parse(savedAudits)) : {};
 
       const savedInspections = localStorage.getItem(STORAGE_KEYS.INSPECTIONS);
       this.inspectionsMap = savedInspections ? JSON.parse(savedInspections) : {};
@@ -68,6 +72,44 @@ class AppStore {
       this.inspectionsMap = {};
       this.selectedAppId = null;
     }
+  }
+
+  private migrateAudits(raw: Record<string, AuditRun[]>): Record<string, AuditRun[]> {
+    const statusMap: Record<string, AuditRun['readinessStatus']> = {
+      HIGH_RISK: 'NOT_READY',
+      READY: 'NO_HIGH_RISK_ISSUES_DETECTED',
+      MANUAL_REVIEW_REQUIRED: 'NO_HIGH_RISK_ISSUES_DETECTED',
+      READY_WITH_WARNINGS: 'READY_WITH_WARNINGS',
+      NOT_READY: 'NOT_READY',
+      NO_HIGH_RISK_ISSUES_DETECTED: 'NO_HIGH_RISK_ISSUES_DETECTED'
+    };
+    const migrated: Record<string, AuditRun[]> = {};
+    Object.entries(raw || {}).forEach(([appId, audits]) => {
+      migrated[appId] = (audits || []).map(audit => ({
+        ...audit,
+        readinessStatus: statusMap[String(audit.readinessStatus)] || computeReadiness(audit.findings || []),
+        passedChecks: audit.passedChecks || [],
+        manualCheckCount: audit.manualCheckCount ?? audit.infoCount ?? 0,
+        findings: (audit.findings || []).map(finding => ({
+          ...finding,
+          severity: (finding.severity as string) === 'INFO' ? 'MANUAL_CHECK' : finding.severity
+        }))
+      }));
+    });
+    return migrated;
+  }
+
+  private migrateReadiness(status?: AuditRun['readinessStatus'] | string): AuditRun['readinessStatus'] | undefined {
+    if (!status) return undefined;
+    const statusMap: Record<string, AuditRun['readinessStatus']> = {
+      HIGH_RISK: 'NOT_READY',
+      READY: 'NO_HIGH_RISK_ISSUES_DETECTED',
+      MANUAL_REVIEW_REQUIRED: 'NO_HIGH_RISK_ISSUES_DETECTED',
+      READY_WITH_WARNINGS: 'READY_WITH_WARNINGS',
+      NOT_READY: 'NOT_READY',
+      NO_HIGH_RISK_ISSUES_DETECTED: 'NO_HIGH_RISK_ISSUES_DETECTED'
+    };
+    return statusMap[String(status)] || 'READY_WITH_WARNINGS';
   }
 
   private persist() {
@@ -206,6 +248,16 @@ class AppStore {
     currentBuild?: string;
     inspection?: NormalizedAppInspection;
   }): Application {
+    if (!data.inspection) {
+      throw new Error('An extracted inspection is required to create an app.');
+    }
+
+    const existing = this.apps.find(app => app.bundleId === data.bundleId);
+    if (existing) {
+      this.runNewAudit(existing.id, data.currentBuild || existing.currentBuild, data.currentVersion || existing.currentVersion, data.inspection);
+      return existing;
+    }
+
     const id = `app_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const newApp: Application = {
       id,
@@ -222,9 +274,6 @@ class AppStore {
 
     this.apps.unshift(newApp);
 
-    if (!data.inspection) {
-      throw new Error('An extracted inspection is required to create an app.');
-    }
     const inspection = data.inspection;
 
     this.inspectionsMap[id] = inspection;
@@ -306,7 +355,7 @@ class AppStore {
         if (f.severity === 'HIGH') high++;
         if (f.severity === 'MEDIUM') med++;
         if (f.severity === 'LOW') low++;
-        if (f.severity === 'INFO') info++;
+        if (f.severity === 'MANUAL_CHECK') info++;
       } else if (f.status === 'FIXED') {
         resolved++;
       }
@@ -319,10 +368,7 @@ class AppStore {
     audit.lowRiskCount = low;
     audit.infoCount = info;
 
-    if (high > 0) audit.readinessStatus = 'HIGH_RISK';
-    else if (med > 0) audit.readinessStatus = 'READY_WITH_WARNINGS';
-    else if (audit.findings.some(f => f.status === 'MANUAL_REVIEW')) audit.readinessStatus = 'MANUAL_REVIEW_REQUIRED';
-    else audit.readinessStatus = 'READY';
+    audit.readinessStatus = computeReadiness(audit.findings);
 
     // Update parent app card
     const app = this.apps.find(a => a.id === appId);

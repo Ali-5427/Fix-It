@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { ReactNode, ErrorInfo } from 'react';
 import { reportClientError } from '../services/telemetry';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -10,13 +10,20 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  readonly props: Readonly<ErrorBoundaryProps>;
+
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.props = props;
+  }
+
   public state: ErrorBoundaryState = { hasError: false };
 
-  public static getDerivedStateFromError(): ErrorBoundaryState {
+  public static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 
-  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     reportClientError(error, errorInfo.componentStack);
   }
 
