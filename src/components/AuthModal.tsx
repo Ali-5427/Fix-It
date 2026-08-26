@@ -193,51 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3.5">
           
           {/* Plan Selector when in Register mode */}
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Select Tier Plan</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTier('free')}
-                  className={`p-2 rounded-xl border text-left text-xs transition-all cursor-pointer ${
-                    tier === 'free'
-                      ? 'border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <div className="font-bold">Starter</div>
-                  <div className="text-[10px] text-slate-500 font-mono">$0/mo</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTier('pro')}
-                  className={`p-2 rounded-xl border text-left text-xs transition-all cursor-pointer relative ${
-                    tier === 'pro'
-                      ? 'border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <div className="font-bold text-blue-700">Pro Indie</div>
-                  <div className="text-[10px] text-slate-500 font-mono">$19/mo</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTier('studio')}
-                  className={`p-2 rounded-xl border text-left text-xs transition-all cursor-pointer ${
-                    tier === 'studio'
-                      ? 'border-purple-600 bg-purple-50/50 text-purple-900 ring-1 ring-purple-600'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <div className="font-bold text-purple-700">Studio</div>
-                  <div className="text-[10px] text-slate-500 font-mono">$49/mo</div>
-                </button>
-              </div>
-            </div>
-          )}
+                    {/* Plan selector removed per user request */}
 
           {mode === 'register' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -314,24 +270,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Apple Developer Team ID <span className="text-slate-400 font-normal">(Optional, e.g. 10-char alphanumeric)</span>
-              </label>
-              <div className="relative">
-                <Key className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  value={appleTeamId}
-                  onChange={(e) => setAppleTeamId(e.target.value.toUpperCase())}
-                  maxLength={10}
-                  placeholder="APEX892K9L"
-                  className="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-3 py-2 text-xs text-slate-900 uppercase font-mono focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
+
 
           {mode === 'login' && (
             <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
@@ -370,7 +309,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all font-mono cursor-pointer"
           >
-            <span>{isLoading ? 'Authenticating...' : mode === 'login' ? 'Sign In & Enter Console' : mode === 'register' ? 'Create Account & Start Audit' : 'Send Instructions'}</span>
+            <span>{isLoading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Send Instructions'}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
