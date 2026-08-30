@@ -306,26 +306,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2.5 px-1 pt-1.5">
-            <button
-              id="sidebar_sign_out_btn"
-              onClick={handleSignOut}
-              className="flex items-center gap-1.5 rounded-lg py-1 px-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-            >
-              <LogOut className="h-3 w-3" />
-              <span>Sign out</span>
-            </button>
-            <span className="text-[9px] text-slate-400 font-mono">v1.0.0</span>
-          </div>
-
-          {/* Minimal sidebar legal footer */}
-          <div className="pt-2 border-t border-slate-200/60 flex justify-center gap-2.5 text-[9px] text-slate-400 font-mono">
-            <a href="/privacy" className="hover:underline hover:text-slate-600">Privacy</a>
-            <span>•</span>
-            <a href="/terms" className="hover:underline hover:text-slate-600">Terms</a>
-            <span>•</span>
-            <a href="/refunds" className="hover:underline hover:text-slate-600">Refunds</a>
-          </div>
+          <button
+            id="sidebar_sign_out_btn"
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>Sign out</span>
+          </button>
         </div>
 
       </aside>

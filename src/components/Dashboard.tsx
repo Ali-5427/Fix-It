@@ -105,10 +105,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <h1 className="text-xl font-bold tracking-tight text-slate-900 font-mono">
                 My Apps
               </h1>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-semibold font-mono shadow-3xs shrink-0 select-none">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span>Cloud Connected</span>
-              </div>
               {user && (
                 <span className="text-[11px] text-slate-500 font-normal">
                   — Welcome back, <strong className="font-semibold text-slate-750">{user.name || user.email.split('@')[0]}</strong>
