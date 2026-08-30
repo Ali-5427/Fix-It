@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { evaluateInspection, compareAudits, computeReadiness } from '../engine/evaluator';
 import { apiClient } from './api';
+import { insforge } from './insforge';
 
 const STORAGE_KEYS = {
   USER: 'fixit_user',
@@ -64,6 +65,10 @@ class AppStore {
 
       const savedSelected = localStorage.getItem(STORAGE_KEYS.SELECTED_APP);
       this.selectedAppId = savedSelected || (this.apps.length > 0 ? this.apps[0].id : null);
+
+      if (this.user) {
+        this.syncFromDatabase();
+      }
     } catch (e) {
       console.error('Error loading store state:', e);
       this.user = null;
@@ -71,6 +76,97 @@ class AppStore {
       this.auditsMap = {};
       this.inspectionsMap = {};
       this.selectedAppId = null;
+    }
+  }
+
+  public async syncFromDatabase() {
+    if (!this.user) return;
+
+    try {
+      // 1. Fetch apps from InsForge
+      const { data: dbApps, error: appsError } = await insforge.database
+        .from('apps')
+        .select('*')
+        .eq('user_id', this.user.id);
+
+      if (appsError) throw appsError;
+
+      if (dbApps) {
+        this.apps = dbApps.map((row: any) => ({
+          id: row.id,
+          userId: row.user_id,
+          name: row.name,
+          bundleId: row.bundle_id,
+          primaryCategory: row.primary_category,
+          currentVersion: row.current_version || '',
+          currentBuild: row.current_build || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          remainingIssuesCount: row.remaining_issues_count || 0,
+          lastAuditDate: row.updated_at,
+          lastAuditStatus: row.last_audit_status || 'READY_WITH_WARNINGS'
+        }));
+      }
+
+      // 2. Fetch audits from InsForge
+      if (this.apps.length > 0) {
+        const appIds = this.apps.map(a => a.id);
+        const { data: dbAudits, error: auditsError } = await insforge.database
+          .from('audits')
+          .select('*')
+          .in('app_id', appIds);
+
+        if (auditsError) throw auditsError;
+
+        if (dbAudits) {
+          const newAuditsMap: Record<string, AuditRun[]> = {};
+          dbAudits.forEach((row: any) => {
+            const audit: AuditRun = {
+              id: row.id,
+              appId: row.app_id,
+              buildNumber: row.build_number,
+              appVersion: row.app_version,
+              createdAt: row.created_at,
+              readinessStatus: row.readiness_status as any,
+              ruleVersion: row.rule_version,
+              summary: row.summary || '',
+              totalFindings: row.total_findings || 0,
+              openFindings: row.open_findings || 0,
+              resolvedFindings: row.resolved_findings || 0,
+              highRiskCount: row.high_risk_count || 0,
+              mediumRiskCount: row.medium_risk_count || 0,
+              lowRiskCount: row.low_risk_count || 0,
+              manualCheckCount: row.manual_check_count || 0,
+              findings: typeof row.findings === 'string' ? JSON.parse(row.findings) : row.findings || [],
+              passedChecks: typeof row.passed_checks === 'string' ? JSON.parse(row.passed_checks) : row.passed_checks || [],
+              reviewerNotesDraft: row.reviewer_notes_draft || '',
+              isAiEnhanced: row.is_ai_enhanced || false
+            };
+
+            if (!newAuditsMap[audit.appId]) {
+              newAuditsMap[audit.appId] = [];
+            }
+            newAuditsMap[audit.appId].push(audit);
+          });
+
+          // Sort audits by createdAt
+          Object.keys(newAuditsMap).forEach(appId => {
+            newAuditsMap[appId].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          });
+
+          this.auditsMap = newAuditsMap;
+        }
+      } else {
+        this.auditsMap = {};
+      }
+
+      if (this.apps.length > 0 && (!this.selectedAppId || !this.apps.find(a => a.id === this.selectedAppId))) {
+        this.selectedAppId = this.apps[0].id;
+      }
+
+      this.persist();
+    } catch (err) {
+      console.warn('InsForge DB sync warning:', err);
     }
   }
 
@@ -185,8 +281,12 @@ class AppStore {
 
   // Actions
   public setUser(user: User | null) {
+    const prevUser = this.user;
     this.user = user;
     this.persist();
+    if (user && (!prevUser || prevUser.id !== user.id)) {
+      this.syncFromDatabase();
+    }
   }
 
   public logout() {
@@ -275,7 +375,6 @@ class AppStore {
     this.apps.unshift(newApp);
 
     const inspection = data.inspection;
-
     this.inspectionsMap[id] = inspection;
 
     // Run initial deterministic audit
@@ -289,6 +388,47 @@ class AppStore {
     this.selectedAppId = id;
     this.activeAuditId = initialAudit.id;
     this.persist();
+
+    // Persist to InsForge database
+    if (this.user) {
+      insforge.database.from('apps').insert([{
+        id: newApp.id,
+        user_id: this.user.id,
+        name: newApp.name,
+        bundle_id: newApp.bundleId,
+        primary_category: newApp.primaryCategory,
+        current_version: newApp.currentVersion,
+        current_build: newApp.currentBuild,
+        remaining_issues_count: newApp.remainingIssuesCount,
+        last_audit_status: newApp.lastAuditStatus
+      }]).then(({ error }) => {
+        if (error) console.error('Error inserting app to InsForge:', error);
+      });
+
+      insforge.database.from('audits').insert([{
+        id: initialAudit.id,
+        app_id: newApp.id,
+        build_number: initialAudit.buildNumber,
+        app_version: initialAudit.appVersion,
+        readiness_status: initialAudit.readinessStatus,
+        rule_version: initialAudit.ruleVersion,
+        summary: initialAudit.summary,
+        total_findings: initialAudit.totalFindings,
+        open_findings: initialAudit.openFindings,
+        resolved_findings: initialAudit.resolvedFindings,
+        high_risk_count: initialAudit.highRiskCount,
+        medium_risk_count: initialAudit.mediumRiskCount,
+        low_risk_count: initialAudit.lowRiskCount,
+        manual_check_count: initialAudit.manualCheckCount,
+        findings: initialAudit.findings,
+        passed_checks: initialAudit.passedChecks,
+        reviewer_notes_draft: initialAudit.reviewerNotesDraft,
+        is_ai_enhanced: initialAudit.isAiEnhanced
+      }]).then(({ error }) => {
+        if (error) console.error('Error inserting initial audit to InsForge:', error);
+      });
+    }
+
     return newApp;
   }
 
@@ -303,6 +443,13 @@ class AppStore {
       this.activeAuditId = latest ? latest.id : null;
     }
     this.persist();
+
+    // Delete from InsForge
+    if (this.user) {
+      insforge.database.from('apps').delete().eq('id', appId).then(({ error }) => {
+        if (error) console.error('Error deleting app from InsForge:', error);
+      });
+    }
   }
 
   public updateFindingStatus(
@@ -379,6 +526,29 @@ class AppStore {
     }
 
     this.persist();
+
+    // Update in InsForge Database
+    if (this.user) {
+      insforge.database.from('audits').update({
+        readiness_status: audit.readinessStatus,
+        open_findings: audit.openFindings,
+        resolved_findings: audit.resolvedFindings,
+        high_risk_count: audit.highRiskCount,
+        medium_risk_count: audit.mediumRiskCount,
+        low_risk_count: audit.lowRiskCount,
+        manual_check_count: audit.manualCheckCount,
+        findings: audit.findings
+      }).eq('id', audit.id).then(({ error }) => {
+        if (error) console.error('Error updating audit findings in InsForge:', error);
+      });
+
+      insforge.database.from('apps').update({
+        remaining_issues_count: audit.openFindings,
+        last_audit_status: audit.readinessStatus
+      }).eq('id', appId).then(({ error }) => {
+        if (error) console.error('Error updating app stats in InsForge:', error);
+      });
+    }
   }
 
   public addFindingNote(
@@ -400,6 +570,15 @@ class AppStore {
     };
     finding.notes.unshift(note);
     this.persist();
+
+    // Update audit in InsForge Database
+    if (this.user) {
+      insforge.database.from('audits').update({
+        findings: audit.findings
+      }).eq('id', audit.id).then(({ error }) => {
+        if (error) console.error('Error updating audit notes in InsForge:', error);
+      });
+    }
   }
 
   public async runNewAudit(
@@ -454,6 +633,41 @@ class AppStore {
 
     this.activeAuditId = newAudit.id;
     this.persist();
+
+    // Persist new audit and update app in InsForge Database
+    if (this.user) {
+      insforge.database.from('audits').insert([{
+        id: newAudit.id,
+        app_id: appId,
+        build_number: newAudit.buildNumber,
+        app_version: newAudit.appVersion,
+        readiness_status: newAudit.readinessStatus,
+        rule_version: newAudit.ruleVersion,
+        summary: newAudit.summary,
+        total_findings: newAudit.totalFindings,
+        open_findings: newAudit.openFindings,
+        resolved_findings: newAudit.resolvedFindings,
+        high_risk_count: newAudit.highRiskCount,
+        medium_risk_count: newAudit.mediumRiskCount,
+        low_risk_count: newAudit.lowRiskCount,
+        manual_check_count: newAudit.manualCheckCount,
+        findings: newAudit.findings,
+        passed_checks: newAudit.passedChecks,
+        reviewer_notes_draft: newAudit.reviewerNotesDraft,
+        is_ai_enhanced: newAudit.isAiEnhanced
+      }]).then(({ error }) => {
+        if (error) console.error('Error inserting new audit to InsForge:', error);
+      });
+
+      insforge.database.from('apps').update({
+        current_build: build,
+        current_version: version,
+        remaining_issues_count: newAudit.openFindings,
+        last_audit_status: newAudit.readinessStatus
+      }).eq('id', appId).then(({ error }) => {
+        if (error) console.error('Error updating app stats in InsForge:', error);
+      });
+    }
 
     let comparison: AuditComparison | undefined;
     if (previousAudit) {
@@ -537,6 +751,12 @@ class AppStore {
   }
 
   public clearData() {
+    if (this.user) {
+      insforge.database.from('apps').delete().eq('user_id', this.user.id).then(({ error }) => {
+        if (error) console.error('Error clearing apps from InsForge:', error);
+      });
+    }
+
     this.apps = [];
     this.auditsMap = {};
     this.inspectionsMap = {};
