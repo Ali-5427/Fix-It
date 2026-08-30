@@ -9,7 +9,6 @@ import {
 } from './src/server/geminiService.js';
 import { APP_STORE_RULES } from './src/engine/rules.js';
 import { APPLE_GUIDELINE_SOURCES } from './src/engine/appleSources.js';
-import { createClient } from '@insforge/sdk';
 import { ADMIN_EMAILS } from './src/config/admin.js';
 
 dotenv.config();
@@ -17,11 +16,11 @@ dotenv.config({ path: '.env.local' });
 
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection detected:', reason);
+  console.error('UNHANDLED', reason);
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception detected:', err);
+  console.error('UNCAUGHT', err);
 });
 
 const __filename = fileURLToPath(import.meta.url);
@@ -140,22 +139,32 @@ export function createServerApp() {
 
     const token = authHeader.substring(7);
 
+    const baseUrl = process.env.VITE_INSFORGE_BASE_URL!;
+    const anonKey = process.env.VITE_INSFORGE_ANON_KEY!;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     try {
-      const baseUrl = process.env.VITE_INSFORGE_BASE_URL!;
-      const anonKey = process.env.VITE_INSFORGE_ANON_KEY!;
-      const client = createClient({ baseUrl, anonKey });
-      client.setAccessToken(token);
+      const response = await fetch(`${baseUrl}/api/auth/sessions/current`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': anonKey,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-      // Enforce a hard 5-second timeout on the InsForge user check to prevent hangs
-      const verifyPromise = client.auth.getCurrentUser();
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('InsForge token verification timed out')), 5000)
-      );
+      if (!response.ok) {
+        return res.status(403).json({ error: 'Forbidden: Invalid user token.' });
+      }
 
-      const result = await Promise.race([verifyPromise, timeoutPromise]) as any;
-      const user = result?.data?.user;
+      const data = (await response.json()) as any;
+      const user = data?.user;
 
-      if (result?.error || !user || !user.email) {
+      if (!user || !user.email) {
         return res.status(403).json({ error: 'Forbidden: Invalid user token.' });
       }
 
@@ -164,8 +173,9 @@ export function createServerApp() {
       }
 
       next();
-    } catch (err) {
-      console.warn('Admin token validation error:', err);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.error('REACHED CATCH BLOCK', err);
       return res.status(403).json({ error: 'Forbidden: Verification failed.' });
     }
   };
