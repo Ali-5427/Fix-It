@@ -20,7 +20,7 @@ interface DashboardProps {
   onOpenApp: (appId: string) => void;
   onCheckNewApp: () => void;
   onCheckNewVersion: (appId: string) => void;
-  onOpenRejectionSolver: () => void;
+  onNavigate: (view: 'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -29,7 +29,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenApp,
   onCheckNewApp,
   onCheckNewVersion,
-  onOpenRejectionSolver
+  onNavigate
 }) => {
   // Format relative or standard date
   const formatCheckDate = (isoString?: string) => {
@@ -51,18 +51,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  // Collect recent checks across all apps
+  // Calculations for stats
+  const totalApps = apps.length;
+  let totalAudits = 0;
+  let totalHighRisk = 0;
+  let totalFixed = 0;
+  let totalScoreSum = 0;
+  let appsWithAuditsCount = 0;
+
   const allAudits: { app: Application; audit: AuditRun }[] = [];
   apps.forEach(app => {
     const audits = store.getAudits(app.id);
+    totalAudits += audits.length;
     audits.forEach(audit => {
       allAudits.push({ app, audit });
     });
+    
+    const latestAudit = store.getLatestAudit(app.id);
+    if (latestAudit) {
+      const score = calculateReadinessScore(latestAudit);
+      totalScoreSum += score;
+      appsWithAuditsCount++;
+      
+      const openFindings = latestAudit.findings.filter(f => f.status !== 'FIXED');
+      totalHighRisk += openFindings.filter(f => f.severity === 'HIGH').length;
+      totalFixed += latestAudit.findings.filter(f => f.status === 'FIXED').length;
+    }
   });
 
-  // Sort by date descending
+  // Sort recent checks by date descending
   allAudits.sort((a, b) => new Date(b.audit.createdAt).getTime() - new Date(a.audit.createdAt).getTime());
   const recentAudits = allAudits.slice(0, 5);
+
+  const averageReadiness = appsWithAuditsCount > 0 ? Math.round(totalScoreSum / appsWithAuditsCount) : 100;
 
   return (
     <div className="w-full min-h-full bg-slate-50/50 py-8 px-4 sm:px-8 lg:px-10">
@@ -71,10 +92,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Welcome & Primary Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
                 My Apps
               </h1>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold font-mono shadow-3xs shrink-0 select-none">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span>Cloud Connected</span>
+              </div>
               {user && (
                 <span className="text-xs text-slate-500 font-normal">
                   — Welcome back, <strong className="font-semibold text-slate-700">{user.name || user.email.split('@')[0]}</strong>
@@ -106,6 +131,88 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
+        {/* Metrics Overview Strip */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Apps Audited</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="text-2xl font-black text-slate-900 font-mono">{totalApps}</span>
+              <span className="text-xs text-slate-500">({totalAudits} audits)</span>
+            </div>
+          </div>
+          
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Average Health</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className={`text-2xl font-black font-mono ${
+                averageReadiness >= 90 ? 'text-emerald-600' : averageReadiness >= 70 ? 'text-amber-600' : 'text-red-600'
+              }`}>{averageReadiness}%</span>
+              <span className="text-xs text-slate-500">readiness</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Critical Flags</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className={`text-2xl font-black font-mono ${totalHighRisk > 0 ? 'text-red-600' : 'text-slate-900'}`}>{totalHighRisk}</span>
+              <span className="text-xs text-slate-500">require action</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Resolved Issues</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="text-2xl font-black text-emerald-600 font-mono">{totalFixed}</span>
+              <span className="text-xs text-slate-500">fixed in cloud</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Developer Toolbox Quick-Start */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Developer Toolbox</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <button
+              onClick={() => onNavigate('rejection')}
+              className="bg-white border border-slate-200 hover:border-blue-400 p-4 rounded-xl shadow-2xs text-left transition-all cursor-pointer group flex flex-col justify-between h-32"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 group-hover:scale-105 transition-transform">
+                <MessageSquareWarning className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 font-mono group-hover:text-blue-600 transition-colors">Rejection Solver</h4>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">Convert Apple rejection notices into step-by-step fix guides and reply templates.</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => onNavigate('metadata')}
+              className="bg-white border border-slate-200 hover:border-blue-400 p-4 rounded-xl shadow-2xs text-left transition-all cursor-pointer group flex flex-col justify-between h-32"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform">
+                <Layers className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 font-mono group-hover:text-blue-600 transition-colors">Metadata Checker</h4>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">Audit app listing keywords, subtitle limits, URLs, and descriptions for compliance.</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => onNavigate('screenshots')}
+              className="bg-white border border-slate-200 hover:border-blue-400 p-4 rounded-xl shadow-2xs text-left transition-all cursor-pointer group flex flex-col justify-between h-32"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
+                <Smartphone className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 font-mono group-hover:text-blue-600 transition-colors">Screenshot Validator</h4>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">Ensure screenshots match required pixel sizes and aspect ratios for all device targets.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Main Content: Empty State vs Apps Grid */}
         {apps.length === 0 ? (
           /* EMPTY STATE */
@@ -127,14 +234,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <Plus className="h-4 w-4" />
                 <span>Upload app</span>
-              </button>
-              <button
-                id="empty_state_rejection_btn"
-                onClick={onOpenRejectionSolver}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer"
-              >
-                <MessageSquareWarning className="h-3.5 w-3.5 text-slate-500" />
-                <span>Apple rejected an existing app?</span>
               </button>
             </div>
           </div>
@@ -337,31 +436,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
             )}
-
-            {/* Apple Rejection Helper Shortcut */}
-            <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-blue-50/30 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-2xs">
-              <div className="flex items-start gap-3.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                  <MessageSquareWarning className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">
-                    Received an App Store rejection message?
-                  </h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Paste Apple's message into the Rejection Solver to understand what was flagged, get recommended fixes, and draft a response for App Review.
-                  </p>
-                </div>
-              </div>
-              <button
-                id="dashboard_open_rejection_solver_btn"
-                onClick={onOpenRejectionSolver}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-4 py-2 text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer"
-              >
-                <span>Solve a Rejection</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
           </div>
         )}
 

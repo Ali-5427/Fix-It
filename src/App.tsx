@@ -38,6 +38,8 @@ export default function App() {
       const currentUser = store.getUser();
       if (!currentUser && currentView === 'dashboard') {
         setCurrentView('landing');
+      } else if (currentUser && currentView === 'landing') {
+        setCurrentView('dashboard');
       }
     });
     return unsubscribe;
@@ -147,7 +149,7 @@ export default function App() {
                   store.selectApp(appId);
                   setUploadModalOpen(true);
                 }}
-                onOpenRejectionSolver={() => setCurrentView('rejection')}
+                onNavigate={(view) => setCurrentView(view)}
               />
             )}
 
@@ -184,16 +186,15 @@ export default function App() {
             )}
           </main>
 
-          {/* Shared Full Footer */}
-          <SiteFooter
-            onStartAudit={() => setUploadModalOpen(true)}
-            onOpenRejectionAnalyzer={() => setCurrentView('rejection')}
-            onOpenChecklist={() => setChecklistModalOpen(true)}
-            onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
-            onOpenStatus={() => setStatusModalOpen(true)}
-            onOpenSupport={() => setSupportModalOpen(true)}
-            onOpenAuth={(mode) => handleOpenAuth(mode)}
-          />
+          {/* Workspace Minimal Footer */}
+          <div className="py-4 border-t border-slate-200 bg-white text-center text-[10px] text-slate-400 font-mono flex flex-col sm:flex-row items-center justify-between px-6 gap-2">
+            <span>© {new Date().getFullYear()} Fixit. Not affiliated with or endorsed by Apple Inc.</span>
+            <div className="flex gap-4">
+              <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy</a>
+              <a href="/terms" className="hover:text-blue-600 transition-colors">Terms</a>
+              <a href="/refunds" className="hover:text-blue-600 transition-colors">Refunds</a>
+            </div>
+          </div>
         </div>
 
         {/* Modals */}
