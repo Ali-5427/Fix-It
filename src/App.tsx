@@ -104,7 +104,7 @@ export default function App() {
 
   if (isAuthenticated && currentView !== 'landing') {
     return (
-      <div className="min-h-screen bg-slate-50 flex text-slate-900 selection:bg-blue-600 selection:text-white">
+      <div className="h-screen overflow-hidden bg-slate-50 flex text-slate-900 selection:bg-blue-600 selection:text-white">
         {/* Left Sidebar */}
         <Sidebar
           currentView={currentView}
@@ -118,7 +118,7 @@ export default function App() {
         />
 
         {/* Main Content Pane */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* Top Demo Banner for instant exploration if active */}
           {false && currentView === 'audit' && (
             <div className="bg-blue-50/95 border-b border-blue-200 px-4 py-2 text-xs text-center flex items-center justify-center gap-2">
@@ -135,7 +135,7 @@ export default function App() {
             </div>
           )}
 
-          <main className="flex-1">
+          <main className="flex-1 overflow-hidden h-full">
             {currentView === 'dashboard' && (
               <Dashboard
                 user={user}
@@ -186,15 +186,7 @@ export default function App() {
             )}
           </main>
 
-          {/* Workspace Minimal Footer */}
-          <div className="py-4 border-t border-slate-200 bg-white text-center text-[10px] text-slate-400 font-mono flex flex-col sm:flex-row items-center justify-between px-6 gap-2">
-            <span>© {new Date().getFullYear()} Fixit. Not affiliated with or endorsed by Apple Inc.</span>
-            <div className="flex gap-4">
-              <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy</a>
-              <a href="/terms" className="hover:text-blue-600 transition-colors">Terms</a>
-              <a href="/refunds" className="hover:text-blue-600 transition-colors">Refunds</a>
-            </div>
-          </div>
+
         </div>
 
         {/* Modals */}

@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Brand Logo & Tagline */}
-        <div className="flex h-16 items-center justify-between px-5 border-b border-slate-100">
+        <div className="flex h-16 items-center justify-between px-5 border-b border-slate-100 shrink-0">
           <button
             onClick={() => {
               onNavigate('dashboard');
@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Primary CTA */}
-        <div className="p-3.5 border-b border-slate-100">
+        <div className="p-3.5 border-b border-slate-100 shrink-0">
           <button
             id="sidebar_check_new_app_btn"
             onClick={() => {
@@ -266,7 +266,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Account & Bottom Actions */}
-        <div className="border-t border-slate-100 p-3 bg-slate-50/50 space-y-2">
+        <div className="border-t border-slate-100 p-3 bg-slate-50/50 space-y-2.5 shrink-0">
           {user && (
             <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-2xs">
               <div className="flex items-center justify-between gap-2">
@@ -306,14 +306,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          <button
-            id="sidebar_sign_out_btn"
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>Sign out</span>
-          </button>
+          <div className="flex items-center justify-between gap-2.5 px-1 pt-1.5">
+            <button
+              id="sidebar_sign_out_btn"
+              onClick={handleSignOut}
+              className="flex items-center gap-1.5 rounded-lg py-1 px-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <LogOut className="h-3 w-3" />
+              <span>Sign out</span>
+            </button>
+            <span className="text-[9px] text-slate-400 font-mono">v1.0.0</span>
+          </div>
+
+          {/* Minimal sidebar legal footer */}
+          <div className="pt-2 border-t border-slate-200/60 flex justify-center gap-2.5 text-[9px] text-slate-400 font-mono">
+            <a href="/privacy" className="hover:underline hover:text-slate-600">Privacy</a>
+            <span>•</span>
+            <a href="/terms" className="hover:underline hover:text-slate-600">Terms</a>
+            <span>•</span>
+            <a href="/refunds" className="hover:underline hover:text-slate-600">Refunds</a>
+          </div>
         </div>
 
       </aside>
