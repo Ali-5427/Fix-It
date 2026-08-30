@@ -36,9 +36,6 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules/firebase')) {
-              return 'vendor-firebase';
-            }
             if (id.includes('node_modules/motion')) {
               return 'vendor-motion';
             }
