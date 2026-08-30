@@ -13,6 +13,16 @@ import { createClient } from '@insforge/sdk';
 import { ADMIN_EMAILS } from './src/config/admin.js';
 
 dotenv.config();
+dotenv.config({ path: '.env.local' });
+
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection detected:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception detected:', err);
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,15 +141,21 @@ export function createServerApp() {
     const token = authHeader.substring(7);
 
     try {
-      const baseUrl = process.env.VITE_INSFORGE_BASE_URL || 'https://37v5babv.us-east.insforge.app';
-      const anonKey = process.env.VITE_INSFORGE_ANON_KEY || 'anon_cb1681eb8340dc585ee724e9248a1f59c2f2e2193f489a867312998c3781b960';
+      const baseUrl = process.env.VITE_INSFORGE_BASE_URL!;
+      const anonKey = process.env.VITE_INSFORGE_ANON_KEY!;
       const client = createClient({ baseUrl, anonKey });
       client.setAccessToken(token);
 
-      const { data, error } = await client.auth.getCurrentUser();
-      const user = data?.user;
+      // Enforce a hard 5-second timeout on the InsForge user check to prevent hangs
+      const verifyPromise = client.auth.getCurrentUser();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('InsForge token verification timed out')), 5000)
+      );
 
-      if (error || !user || !user.email) {
+      const result = await Promise.race([verifyPromise, timeoutPromise]) as any;
+      const user = result?.data?.user;
+
+      if (result?.error || !user || !user.email) {
         return res.status(403).json({ error: 'Forbidden: Invalid user token.' });
       }
 
@@ -149,6 +165,7 @@ export function createServerApp() {
 
       next();
     } catch (err) {
+      console.warn('Admin token validation error:', err);
       return res.status(403).json({ error: 'Forbidden: Verification failed.' });
     }
   };
@@ -169,6 +186,9 @@ export function createServerApp() {
 }
 
 export function startServer() {
+  if (!process.env.VITE_INSFORGE_BASE_URL || !process.env.VITE_INSFORGE_ANON_KEY) {
+    throw new Error('CRITICAL CONFIGURATION ERROR: Environment variables VITE_INSFORGE_BASE_URL and VITE_INSFORGE_ANON_KEY must be set.');
+  }
   const app = createServerApp();
   const PORT = process.env.PORT || 3000;
   const distPath = path.resolve('dist');
