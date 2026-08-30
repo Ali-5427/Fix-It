@@ -23,6 +23,7 @@ import {
 import { store } from '../services/store';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { getTrialDaysRemaining, isTrialActive } from '../utils/trial';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -132,7 +133,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     ? 'bg-blue-100 text-blue-800 border border-blue-200' 
                     : 'bg-slate-100 text-slate-700 border border-slate-200'
                 }`}>
-                  {currentTier === 'free' ? 'STARTER' : currentTier.toUpperCase()}
+                  {isTrialActive(user) && currentTier === 'pro'
+                    ? `PRO TRIAL — ${getTrialDaysRemaining(user)} DAYS LEFT`
+                    : currentTier === 'free' ? 'STARTER' : currentTier.toUpperCase()}
                 </span>
               </div>
               <p className="text-xs text-slate-500">{user.email} • Apple Team: <span className="font-mono text-slate-700">{user.appleTeamId || 'APEX892K9L'}</span></p>
@@ -293,31 +296,52 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           {/* TAB 2: Subscription & Billing */}
           {activeTab === 'subscription' && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 font-mono">Current Subscription</div>
-                  <h4 className="text-lg font-bold text-slate-900 mt-0.5">
-                    {currentTier === 'studio' ? 'Studio & Agency Plan' : currentTier === 'pro' ? 'Pro Developer Plan' : 'Starter Free Plan'}
-                  </h4>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {currentTier === 'studio' 
-                      ? 'Unlimited deep audits, multi-client workspace, priority guideline rules.'
-                      : currentTier === 'pro'
-                      ? 'Unlimited .ipa audits, build-to-build diffing, and Rejection Notice solver.'
-                      : 'Basic Info.plist & Privacy String inspection.'}
-                  </p>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <div className="text-2xl font-extrabold text-slate-900 font-mono">
-                    {currentTier === 'studio' ? '$49' : currentTier === 'pro' ? '$19' : '$0'}
-                    <span className="text-xs text-slate-500 font-sans font-normal">/mo</span>
+              {isTrialActive(user) && currentTier === 'pro' ? (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/45 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 font-mono">Current Plan</div>
+                    <h4 className="text-base font-bold text-slate-900 mt-0.5">Pro Developer (30-Day Trial)</h4>
+                    <p className="text-[11px] text-slate-650 mt-1">
+                      Your trial ends on <strong className="text-slate-800 font-semibold">{new Date(user.trialEndsAt || '').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>. Upgrade to maintain access to premium scan features.
+                    </p>
                   </div>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    ACTIVE
-                  </span>
+                  <button
+                    onClick={() => {
+                      console.log('Upgrade plan requested');
+                      alert('Upgrade process will begin soon! Your trial is currently active.');
+                    }}
+                    className="shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                  >
+                    Upgrade Plan
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 font-mono">Current Subscription</div>
+                    <h4 className="text-lg font-bold text-slate-900 mt-0.5">
+                      {currentTier === 'studio' ? 'Studio & Agency Plan' : currentTier === 'pro' ? 'Pro Developer Plan' : 'Starter Free Plan'}
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {currentTier === 'studio' 
+                        ? 'Unlimited deep audits, multi-client workspace, priority guideline rules.'
+                        : currentTier === 'pro'
+                        ? 'Unlimited .ipa audits, build-to-build diffing, and Rejection Notice solver.'
+                        : 'Basic Info.plist & Privacy String inspection.'}
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="text-2xl font-extrabold text-slate-900 font-mono">
+                      {currentTier === 'studio' ? '$49' : currentTier === 'pro' ? '$19' : '$0'}
+                      <span className="text-xs text-slate-500 font-sans font-normal">/mo</span>
+                    </div>
+                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      ACTIVE
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Plan Switcher Cards */}
               <div className="space-y-2">

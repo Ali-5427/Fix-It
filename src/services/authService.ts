@@ -22,12 +22,26 @@ export class AuthService {
           if (insUser) {
             const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
             const profileData: any = rawProfileData;
+
+            let userTier = (profileData?.tier as any) || 'pro';
+            const trialEndsAt = profileData?.trialEndsAt as string | undefined;
+
+            if (trialEndsAt && userTier === 'pro') {
+              if (Date.now() > new Date(trialEndsAt).getTime()) {
+                userTier = 'free';
+                await insforge.auth.setProfile({ tier: 'free' }).catch(err => {
+                  console.warn('Could not persist auto-downgrade on trial expiration:', err);
+                });
+              }
+            }
+
             const appUser: User = {
               id: insUser.id,
               email: insUser.email || 'developer@apple.dev',
               name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
               role: (profileData?.role as any) || 'developer',
-              tier: (profileData?.tier as any) || 'pro',
+              tier: userTier,
+              trialEndsAt,
               teamName: (profileData?.teamName as string) || 'Apple Developer Team',
               appleTeamId: (profileData?.appleTeamId as string) || 'APL' + Math.random().toString(36).substring(2, 8).toUpperCase(),
               avatarUrl: profileData?.avatar_url || insUser.profile?.avatar_url || undefined,
@@ -60,12 +74,26 @@ export class AuthService {
         try {
           const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
           const profileData: any = rawProfileData;
+
+          let userTier = (profileData?.tier as any) || 'pro';
+          const trialEndsAt = profileData?.trialEndsAt as string | undefined;
+
+          if (trialEndsAt && userTier === 'pro') {
+            if (Date.now() > new Date(trialEndsAt).getTime()) {
+              userTier = 'free';
+              await insforge.auth.setProfile({ tier: 'free' }).catch(err => {
+                console.warn('Could not persist auto-downgrade on trial expiration:', err);
+              });
+            }
+          }
+
           const appUser: User = {
             id: insUser.id,
             email: insUser.email || 'developer@apple.dev',
             name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
             role: (profileData?.role as any) || 'developer',
-            tier: (profileData?.tier as any) || 'pro',
+            tier: userTier,
+            trialEndsAt,
             teamName: (profileData?.teamName as string) || 'Apple Developer Team',
             appleTeamId: (profileData?.appleTeamId as string) || 'APL' + Math.random().toString(36).substring(2, 8).toUpperCase(),
             avatarUrl: profileData?.avatar_url || insUser.profile?.avatar_url || undefined,
@@ -115,12 +143,15 @@ export class AuthService {
     const insUser = regData?.user;
     if (!insUser) throw new Error('Registration failed.');
 
+    const trialEndsAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+
     const appUser: User = {
       id: insUser.id,
       email: insUser.email || email,
       name: name || email.split('@')[0],
       role: 'developer',
-      tier,
+      tier: 'pro',
+      trialEndsAt,
       teamName: teamName || 'Indie Studio',
       appleTeamId: appleTeamId || 'DEV' + Math.random().toString(36).substring(2, 8).toUpperCase(),
       createdAt: new Date().toISOString(),
@@ -136,6 +167,7 @@ export class AuthService {
       name: appUser.name,
       role: appUser.role,
       tier: appUser.tier,
+      trialEndsAt: appUser.trialEndsAt,
       teamName: appUser.teamName,
       appleTeamId: appUser.appleTeamId,
       notificationsEnabled: appUser.settings?.notificationsEnabled ?? true,
@@ -163,12 +195,25 @@ export class AuthService {
     const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
     const profileData: any = rawProfileData;
 
+    let userTier = (profileData?.tier as any) || 'pro';
+    const trialEndsAt = profileData?.trialEndsAt as string | undefined;
+
+    if (trialEndsAt && userTier === 'pro') {
+      if (Date.now() > new Date(trialEndsAt).getTime()) {
+        userTier = 'free';
+        await insforge.auth.setProfile({ tier: 'free' }).catch(err => {
+          console.warn('Could not persist auto-downgrade on trial expiration:', err);
+        });
+      }
+    }
+
     const appUser: User = {
       id: insUser.id,
       email,
       name: profileData?.name || insUser.profile?.name || email.split('@')[0],
       role: (profileData?.role as any) || 'developer',
-      tier: (profileData?.tier as any) || 'pro',
+      tier: userTier,
+      trialEndsAt,
       teamName: (profileData?.teamName as string) || 'Apple Developer Team',
       appleTeamId: (profileData?.appleTeamId as string) || 'APL982019',
       createdAt: insUser.createdAt || new Date().toISOString(),

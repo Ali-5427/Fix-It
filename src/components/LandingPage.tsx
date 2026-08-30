@@ -817,10 +817,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">STARTER</div>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-slate-900 font-mono">$0</span>
-                  <span className="text-xs text-slate-500">/ forever</span>
+                  <span className="text-xs text-slate-500">/ month</span>
                 </div>
                 <p className="mt-3 text-xs text-slate-600">
-                  For indie developers checking their first app.
+                  Free base tier after your 30-day Pro trial ends.
                 </p>
 
                 <div className="my-6 border-t border-slate-100"></div>
@@ -844,15 +844,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Pro Plan (Most Popular) */}
             <div className="rounded-3xl border-2 border-blue-600 bg-gradient-to-b from-blue-50/40 to-white p-6 sm:p-8 flex flex-col justify-between relative shadow-xl shadow-blue-600/15">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 text-white font-mono text-[10px] font-bold px-3 py-0.5 tracking-wider uppercase shadow-md shadow-blue-600/30">
-                MOST POPULAR
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 text-white font-mono text-[10px] font-bold px-3 py-0.5 tracking-wider uppercase shadow-md shadow-blue-600/30 animate-pulse">
+                30 DAYS FREE ON SIGNUP
               </div>
 
               <div>
                 <div className="text-xs font-mono font-bold uppercase tracking-wider text-blue-700">PRO DEVELOPER</div>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-950 font-mono">$19</span>
-                  <span className="text-xs text-slate-500">/ month</span>
+                <div className="mt-3 flex flex-col items-start gap-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold text-slate-950 font-mono">$19</span>
+                    <span className="text-xs text-slate-500">/ month</span>
+                  </div>
+                  <span className="mt-1 px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold font-mono">
+                    First 30 days free on signup
+                  </span>
                 </div>
                 <p className="mt-3 text-xs text-slate-600">
                   For developers actively shipping and updating apps.

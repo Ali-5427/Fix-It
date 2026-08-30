@@ -47,6 +47,7 @@ export interface User {
   name: string;
   role: 'developer' | 'admin';
   tier?: 'free' | 'pro' | 'studio';
+  trialEndsAt?: string;
   teamName?: string;
   appleTeamId?: string;
   avatarUrl?: string;
