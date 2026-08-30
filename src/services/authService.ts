@@ -1,153 +1,103 @@
-import { 
-  auth, 
-  db, 
-  googleProvider, 
-  signInWithPopup, 
-  signOut as fbSignOut, 
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  sendPasswordResetEmail,
-  FirebaseUser
-} from './firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy, onSnapshot, Unsubscribe } from 'firebase/firestore';
-import { User, Application, AuditRun } from '../types';
+import { insforge } from './insforge';
+import { User } from '../types';
 import { store } from './store';
+
+export type Unsubscribe = () => void;
 
 export class AuthService {
   private currentUser: User | null = null;
   private unsubscribeAuth: Unsubscribe | null = null;
-  private unsubscribeFirestoreUser: Unsubscribe | null = null;
 
   constructor() {
     this.initAuthListener();
   }
 
   private initAuthListener() {
-    this.unsubscribeAuth = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
-      if (fbUser) {
+    // Subscribe to InsForge auth changes
+    const unsubscribe = insforge.auth.onAuthStateChange(async (event) => {
+      if (event === 'signedIn' || event === 'tokenRefreshed') {
         try {
-          // Fetch or initialize user profile from Firestore
-          const userDocRef = doc(db, 'users', fbUser.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          let appUser: User;
-          if (userDoc.exists()) {
-            appUser = userDoc.data() as User;
-          } else {
-            // Create user document in Firestore
-            appUser = {
-              id: fbUser.uid,
-              email: fbUser.email || 'developer@apple.dev',
-              name: fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : 'iOS Developer'),
-              role: 'developer',
-              tier: 'pro',
-              teamName: 'Apple Developer Team',
-              appleTeamId: 'DEV' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-              avatarUrl: fbUser.photoURL || undefined,
-              token: await fbUser.getIdToken(),
-              createdAt: new Date().toISOString(),
+          const { data: userData } = await insforge.auth.getCurrentUser();
+          const insUser = userData?.user;
+          if (insUser) {
+            const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
+            const profileData: any = rawProfileData;
+            const appUser: User = {
+              id: insUser.id,
+              email: insUser.email || 'developer@apple.dev',
+              name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
+              role: (profileData?.role as any) || 'developer',
+              tier: (profileData?.tier as any) || 'pro',
+              teamName: (profileData?.teamName as string) || 'Apple Developer Team',
+              appleTeamId: (profileData?.appleTeamId as string) || 'APL' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+              avatarUrl: profileData?.avatar_url || insUser.profile?.avatar_url || undefined,
+              createdAt: insUser.createdAt || new Date().toISOString(),
               settings: {
-                notificationsEnabled: true,
-                autoRecheckOnUpload: true,
-                defaultExportFormat: 'markdown',
-                apiKey: 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
+                notificationsEnabled: profileData?.notificationsEnabled ?? true,
+                autoRecheckOnUpload: profileData?.autoRecheckOnUpload ?? true,
+                defaultExportFormat: profileData?.defaultExportFormat ?? 'markdown',
+                apiKey: profileData?.apiKey || 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
               }
             };
-            await setDoc(userDocRef, appUser);
+            this.currentUser = appUser;
+            store.setUser(appUser);
           }
-
-          this.currentUser = appUser;
-          store.setUser(appUser);
-          this.listenToUserDocument(fbUser.uid);
         } catch (err) {
-          console.warn('Error reading user profile from Firestore, using auth fallback:', err);
-          const fallbackUser: User = {
-            id: fbUser.uid,
-            email: fbUser.email || 'developer@apple.dev',
-            name: fbUser.displayName || 'iOS Developer',
-            role: 'developer',
-            tier: 'pro',
-            teamName: 'Apple Developer Team',
-            appleTeamId: 'APL982019',
-            avatarUrl: fbUser.photoURL || undefined,
-            createdAt: new Date().toISOString(),
+          console.warn('Error fetching current user state:', err);
+        }
+      } else if (event === 'signedOut') {
+        this.currentUser = null;
+        store.setUser(null);
+      }
+    });
+
+    this.unsubscribeAuth = () => unsubscribe();
+
+    // Initial check on load
+    insforge.auth.getCurrentUser().then(async ({ data: userData }) => {
+      const insUser = userData?.user;
+      if (insUser) {
+        try {
+          const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
+          const profileData: any = rawProfileData;
+          const appUser: User = {
+            id: insUser.id,
+            email: insUser.email || 'developer@apple.dev',
+            name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
+            role: (profileData?.role as any) || 'developer',
+            tier: (profileData?.tier as any) || 'pro',
+            teamName: (profileData?.teamName as string) || 'Apple Developer Team',
+            appleTeamId: (profileData?.appleTeamId as string) || 'APL' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+            avatarUrl: profileData?.avatar_url || insUser.profile?.avatar_url || undefined,
+            createdAt: insUser.createdAt || new Date().toISOString(),
             settings: {
-              notificationsEnabled: true,
-              autoRecheckOnUpload: true,
-              defaultExportFormat: 'markdown'
+              notificationsEnabled: profileData?.notificationsEnabled ?? true,
+              autoRecheckOnUpload: profileData?.autoRecheckOnUpload ?? true,
+              defaultExportFormat: profileData?.defaultExportFormat ?? 'markdown',
+              apiKey: profileData?.apiKey || 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
             }
           };
-          this.currentUser = fallbackUser;
-          store.setUser(fallbackUser);
+          this.currentUser = appUser;
+          store.setUser(appUser);
+        } catch (err) {
+          console.warn('Error fetching initial user profile:', err);
         }
-      } else {
-        this.currentUser = null;
-        if (this.unsubscribeFirestoreUser) {
-          this.unsubscribeFirestoreUser();
-          this.unsubscribeFirestoreUser = null;
-        }
-        // Note: Store will keep its local sandbox user or null
       }
+    }).catch(err => {
+      console.warn('Error checking initial auth state:', err);
     });
   }
 
-  private listenToUserDocument(userId: string) {
-    if (this.unsubscribeFirestoreUser) {
-      this.unsubscribeFirestoreUser();
-    }
-    const userDocRef = doc(db, 'users', userId);
-    this.unsubscribeFirestoreUser = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const updated = docSnap.data() as User;
-        this.currentUser = updated;
-        store.setUser(updated);
-      }
-    }, (error) => {
-      console.warn('Firestore user listener notice:', error.message);
-    });
-  }
-
-  // Real Google Single Sign-On
+  // Google OAuth Sign-in
   public async signInWithGoogle(): Promise<User> {
-    const result = await signInWithPopup(auth, googleProvider);
-    const fbUser = result.user;
-    
-    const userDocRef = doc(db, 'users', fbUser.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    let appUser: User;
-    if (userDoc.exists()) {
-      appUser = userDoc.data() as User;
-    } else {
-      appUser = {
-        id: fbUser.uid,
-        email: fbUser.email || 'developer@gmail.com',
-        name: fbUser.displayName || 'iOS Developer',
-        role: 'developer',
-        tier: 'pro',
-        teamName: 'Apple Developer Team',
-        appleTeamId: 'APL' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-        avatarUrl: fbUser.photoURL || undefined,
-        token: await fbUser.getIdToken(),
-        createdAt: new Date().toISOString(),
-        settings: {
-          notificationsEnabled: true,
-          autoRecheckOnUpload: true,
-          defaultExportFormat: 'markdown',
-          apiKey: 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
-        }
-      };
-      await setDoc(userDocRef, appUser);
-    }
-
-    this.currentUser = appUser;
-    store.setUser(appUser);
-    return appUser;
+    const { data, error } = await insforge.auth.signInWithOAuth('google', {
+      redirectTo: window.location.origin,
+    });
+    if (error) throw error;
+    return {} as User;
   }
 
-  // Real Email & Password Registration
+  // Email & Password Registration
   public async registerWithEmail(
     email: string, 
     pass: string, 
@@ -156,22 +106,23 @@ export class AuthService {
     appleTeamId?: string,
     teamName?: string
   ): Promise<User> {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const fbUser = cred.user;
-
-    if (name) {
-      await updateProfile(fbUser, { displayName: name });
-    }
+    const { data: regData, error: regError } = await insforge.auth.signUp({
+      email,
+      password: pass,
+      name,
+    });
+    if (regError) throw regError;
+    const insUser = regData?.user;
+    if (!insUser) throw new Error('Registration failed.');
 
     const appUser: User = {
-      id: fbUser.uid,
-      email: fbUser.email || email,
+      id: insUser.id,
+      email: insUser.email || email,
       name: name || email.split('@')[0],
       role: 'developer',
       tier,
       teamName: teamName || 'Indie Studio',
       appleTeamId: appleTeamId || 'DEV' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-      token: await fbUser.getIdToken(),
       createdAt: new Date().toISOString(),
       settings: {
         notificationsEnabled: true,
@@ -181,69 +132,106 @@ export class AuthService {
       }
     };
 
-    const userDocRef = doc(db, 'users', fbUser.uid);
-    await setDoc(userDocRef, appUser);
+    const { error: profileError } = await insforge.auth.setProfile({
+      name: appUser.name,
+      role: appUser.role,
+      tier: appUser.tier,
+      teamName: appUser.teamName,
+      appleTeamId: appUser.appleTeamId,
+      notificationsEnabled: appUser.settings?.notificationsEnabled ?? true,
+      autoRecheckOnUpload: appUser.settings?.autoRecheckOnUpload ?? true,
+      defaultExportFormat: appUser.settings?.defaultExportFormat ?? 'markdown',
+      apiKey: appUser.settings?.apiKey,
+    });
+    if (profileError) throw profileError;
 
     this.currentUser = appUser;
     store.setUser(appUser);
     return appUser;
   }
 
-  // Real Email & Password Login
+  // Email & Password Login
   public async loginWithEmail(email: string, pass: string): Promise<User> {
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    const fbUser = cred.user;
+    const { data: logData, error: logError } = await insforge.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
+    if (logError) throw logError;
+    const insUser = logData?.user;
+    if (!insUser) throw new Error('User not found.');
 
-    const userDocRef = doc(db, 'users', fbUser.uid);
-    const userDoc = await getDoc(userDocRef);
+    const { data: rawProfileData } = await insforge.auth.getProfile(insUser.id);
+    const profileData: any = rawProfileData;
 
-    let appUser: User;
-    if (userDoc.exists()) {
-      appUser = userDoc.data() as User;
-    } else {
-      appUser = {
-        id: fbUser.uid,
-        email: fbUser.email || email,
-        name: fbUser.displayName || email.split('@')[0],
-        role: 'developer',
-        tier: 'pro',
-        teamName: 'Apple Developer Team',
-        appleTeamId: 'APL982019',
-        token: await fbUser.getIdToken(),
-        createdAt: new Date().toISOString(),
-        settings: {
-          notificationsEnabled: true,
-          autoRecheckOnUpload: true,
-          defaultExportFormat: 'markdown',
-          apiKey: 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
-        }
-      };
-      await setDoc(userDocRef, appUser);
-    }
+    const appUser: User = {
+      id: insUser.id,
+      email,
+      name: profileData?.name || insUser.profile?.name || email.split('@')[0],
+      role: (profileData?.role as any) || 'developer',
+      tier: (profileData?.tier as any) || 'pro',
+      teamName: (profileData?.teamName as string) || 'Apple Developer Team',
+      appleTeamId: (profileData?.appleTeamId as string) || 'APL982019',
+      createdAt: insUser.createdAt || new Date().toISOString(),
+      settings: {
+        notificationsEnabled: profileData?.notificationsEnabled ?? true,
+        autoRecheckOnUpload: profileData?.autoRecheckOnUpload ?? true,
+        defaultExportFormat: profileData?.defaultExportFormat ?? 'markdown',
+        apiKey: profileData?.apiKey || 'ar_pk_live_' + Math.random().toString(36).substring(2, 12)
+      }
+    };
 
     this.currentUser = appUser;
     store.setUser(appUser);
     return appUser;
   }
 
-  // Real Password Reset Email
+  // Password Reset Email
   public async sendPasswordReset(email: string): Promise<void> {
-    await sendPasswordResetEmail(auth, email);
+    const { error } = await insforge.auth.sendResetPasswordEmail({
+      email,
+      redirectTo: window.location.origin + '/reset-password',
+    });
+    if (error) throw error;
   }
 
-  // Real Sign Out
+  // Sign Out
   public async signOut(): Promise<void> {
-    await fbSignOut(auth);
+    const { error } = await insforge.auth.signOut();
+    if (error) throw error;
     this.currentUser = null;
     store.setUser(null);
   }
 
-  // Sync profile update to Firestore
+  // Sync profile updates to InsForge
   public async updateUserProfile(updates: Partial<User>): Promise<void> {
     if (!this.currentUser) return;
-    const uid = this.currentUser.id;
-    const userDocRef = doc(db, 'users', uid);
-    await updateDoc(userDocRef, updates as Record<string, any>);
+    
+    const profileUpdate: Record<string, any> = {};
+    if (updates.name) profileUpdate.name = updates.name;
+    if (updates.role) profileUpdate.role = updates.role;
+    if (updates.tier) profileUpdate.tier = updates.tier;
+    if (updates.teamName) profileUpdate.teamName = updates.teamName;
+    if (updates.appleTeamId) profileUpdate.appleTeamId = updates.appleTeamId;
+    if (updates.avatarUrl) profileUpdate.avatar_url = updates.avatarUrl;
+    if (updates.settings) {
+      if (updates.settings.notificationsEnabled !== undefined) profileUpdate.notificationsEnabled = updates.settings.notificationsEnabled;
+      if (updates.settings.autoRecheckOnUpload !== undefined) profileUpdate.autoRecheckOnUpload = updates.settings.autoRecheckOnUpload;
+      if (updates.settings.defaultExportFormat !== undefined) profileUpdate.defaultExportFormat = updates.settings.defaultExportFormat;
+      if (updates.settings.apiKey !== undefined) profileUpdate.apiKey = updates.settings.apiKey;
+    }
+
+    const { error } = await insforge.auth.setProfile(profileUpdate);
+    if (error) throw error;
+
+    this.currentUser = {
+      ...this.currentUser,
+      ...updates,
+      settings: {
+        ...(this.currentUser.settings || {}),
+        ...(updates.settings || {})
+      }
+    };
+    store.setUser(this.currentUser);
   }
 
   public getCurrentUser(): User | null {

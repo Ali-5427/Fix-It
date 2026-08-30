@@ -92,14 +92,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     } catch (err: any) {
       console.error('Auth error:', err);
       let message = err.message || 'Authentication failed. Please check your credentials.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err.error === 'INVALID_CREDENTIALS' || err.statusCode === 401) {
         message = 'Invalid email or password. If you do not have an account yet, please sign up or use Google Sign-in.';
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (err.error === 'EMAIL_ALREADY_IN_USE' || err.error === 'USER_ALREADY_EXISTS') {
         message = 'This email is already registered. Please sign in instead.';
-      } else if (err.code === 'auth/weak-password') {
+      } else if (err.error === 'WEAK_PASSWORD') {
         message = 'Password must be at least 6 characters.';
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        message = 'Google sign-in popup was closed.';
       }
       setErrorMsg(message);
     } finally {
