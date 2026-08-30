@@ -4,13 +4,9 @@ import {
   ShieldCheck, 
   Copy, 
   Check, 
-  Download, 
   X, 
-  ExternalLink, 
-  Filter, 
-  AlertCircle, 
-  Sparkles,
-  Info
+  Info,
+  AlertCircle
 } from 'lucide-react';
 
 interface ChecklistItem {
@@ -134,17 +130,18 @@ const CHECKLIST_DATA: ChecklistItem[] = [
   }
 ];
 
-interface ReviewChecklistModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface ReviewChecklistProps {
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const ReviewChecklistModal: React.FC<ReviewChecklistModalProps> = ({ isOpen, onClose }) => {
+export const ReviewChecklist: React.FC<ReviewChecklistProps> = ({ isOpen, onClose }) => {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen) return null;
+  // If this is a modal and it is not open, do not render
+  if (isOpen !== undefined && !isOpen) return null;
 
   const toggleItem = (id: string) => {
     setCheckedIds(prev => ({
@@ -178,142 +175,143 @@ export const ReviewChecklistModal: React.FC<ReviewChecklistModalProps> = ({ isOp
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20">
-              <CheckSquare className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                App Store Review Checklist
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                  2026 Edition
-                </span>
-              </h2>
-              <p className="text-xs text-slate-600">
-                Interactive pre-submission verification based on published Apple App Store Guidelines.
-              </p>
-            </div>
+  const content = (
+    <div className={`flex flex-col h-full overflow-hidden ${isOpen ? 'bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] shadow-2xl border border-slate-200' : ''}`}>
+      {/* Header */}
+      <div className={`flex items-center justify-between border-b border-slate-200/85 pb-4 shrink-0 ${isOpen ? 'px-6 py-5 bg-slate-50/80' : ''}`}>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 font-mono">
+              App Store Review Checklist
+            </h1>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shadow-3xs">
+              2026 Edition
+            </span>
           </div>
-          
+          <p className="text-xs text-slate-600 mt-0.5">
+            Interactive pre-submission verification based on published Apple App Store Guidelines.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            onClick={handleCopyMarkdown}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-3xs transition-colors cursor-pointer shrink-0"
           >
-            <X className="h-5 w-5" />
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-500" />}
+            <span>{copied ? 'Copied Markdown!' : 'Copy Checklist'}</span>
           </button>
-        </div>
-
-        {/* Progress & Category Bar */}
-        <div className="px-6 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="text-xs font-semibold text-slate-700 whitespace-nowrap">
-              Ready Score: <span className="font-mono text-blue-600 font-bold">{completedCount}/{totalCount}</span> ({percent}%)
-            </div>
-            <div className="w-36 sm:w-44 h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
-              {['ALL', 'PRIVACY', 'AUTH', 'IAP', 'UGC', 'METADATA'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
-                    selectedCategory === cat 
-                      ? 'bg-blue-600 text-white shadow-xs' 
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
+          
+          {isOpen && onClose && (
             <button
-              onClick={handleCopyMarkdown}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-500" />}
-              <span>{copied ? 'Copied Markdown!' : 'Copy Checklist'}</span>
+              <X className="h-5 w-5" />
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Progress & Category Filter bar */}
+      <div className={`bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 shadow-3xs ${isOpen ? 'mx-6 mt-4' : 'my-4'}`}>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+            Ready Score: <span className="font-mono text-blue-600 font-bold">{completedCount}/{totalCount}</span> ({percent}%)
+          </div>
+          <div className="w-full sm:w-44 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
+            <div 
+              className="h-full bg-blue-600 rounded-full transition-all duration-300"
+              style={{ width: `${percent}%` }}
+            />
           </div>
         </div>
 
-        {/* Checklist Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
-          {filteredItems.map(item => {
-            const isChecked = !!checkedIds[item.id];
-            return (
-              <div
-                key={item.id}
-                onClick={() => toggleItem(item.id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3.5 ${
-                  isChecked 
-                    ? 'bg-emerald-50/50 border-emerald-200/90 shadow-2xs' 
-                    : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-2xs'
-                }`}
-              >
-                <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                  isChecked 
-                    ? 'bg-emerald-600 border-emerald-600 text-white' 
-                    : 'border-slate-300 bg-slate-50'
-                }`}>
-                  {isChecked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                </div>
+        <div className="flex flex-wrap items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 text-xs w-full sm:w-auto justify-start sm:justify-end">
+          {['ALL', 'PRIVACY', 'AUTH', 'IAP', 'UGC', 'METADATA'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer ${
+                selectedCategory === cat 
+                  ? 'bg-blue-600 text-white shadow-3xs' 
+                  : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className={`text-sm font-bold ${isChecked ? 'text-emerald-950 line-through opacity-80' : 'text-slate-900'}`}>
-                      {item.title}
-                    </h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200 bg-slate-100 text-slate-600 font-semibold">
-                      {item.guideline}
+      {/* Checklist Content Body */}
+      <div className={`flex-1 overflow-y-auto pr-1 scrollbar-none space-y-3 pb-6 ${isOpen ? 'px-6 pt-4' : ''}`}>
+        {filteredItems.map(item => {
+          const isChecked = !!checkedIds[item.id];
+          return (
+            <div
+              key={item.id}
+              onClick={() => toggleItem(item.id)}
+              className={`p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3.5 ${
+                isChecked 
+                  ? 'bg-emerald-50/40 border-emerald-200/80 shadow-3xs' 
+                  : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-3xs'
+              }`}
+            >
+              <div className={`mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
+                isChecked 
+                  ? 'bg-emerald-600 border-emerald-600 text-white' 
+                  : 'border-slate-300 bg-slate-50'
+              }`}>
+                {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className={`text-xs font-bold ${isChecked ? 'text-emerald-950 line-through opacity-80' : 'text-slate-900'}`}>
+                    {item.title}
+                  </h3>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-200 bg-slate-100 text-slate-500 font-semibold">
+                    {item.guideline}
+                  </span>
+                  {item.critical && (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-bold">
+                      BLOCKER
                     </span>
-                    {item.critical && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-bold">
-                        BLOCKER
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-2">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-700 bg-slate-100/70 px-2.5 py-1 rounded-md border border-slate-200/60 w-fit">
-                    <span className="text-blue-600 font-bold">Fix:</span>
-                    <span>{item.recommendation}</span>
-                  </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed mb-2.5">
+                  {item.description}
+                </p>
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-700 bg-slate-100/70 px-2.5 py-1 rounded-md border border-slate-200/60 w-fit">
+                  <span className="text-blue-600 font-bold">Fix:</span>
+                  <span>{item.recommendation}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-blue-600" />
-            <span>Updated weekly against Apple Resolution Center rejection patterns.</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-colors cursor-pointer"
-          >
-            Done
-          </button>
-        </div>
-
+            </div>
+          );
+        })}
       </div>
+
+      {/* Info Banner Footer */}
+      <div className={`rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-2.5 text-[10px] text-slate-500 shrink-0 shadow-3xs ${isOpen ? 'mx-6 mb-5' : ''}`}>
+        <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+        <span>Updated weekly against Apple App Review guidelines and rejection center patterns.</span>
+      </div>
+    </div>
+  );
+
+  if (isOpen) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-100">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full bg-slate-50/50 flex flex-col p-6 overflow-hidden">
+      {content}
     </div>
   );
 };

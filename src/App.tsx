@@ -15,7 +15,7 @@ import { AuditDiffModal } from './components/AuditDiffModal';
 import { SubmissionReportModal } from './components/SubmissionReportModal';
 import { AuthModal } from './components/AuthModal';
 import { AccountModal } from './components/AccountModal';
-import { ReviewChecklistModal } from './components/ReviewChecklistModal';
+import { ReviewChecklist } from './components/ReviewChecklist';
 import { PrivacyStringsModal } from './components/PrivacyStringsModal';
 import { StatusPageModal } from './components/StatusPageModal';
 import { SupportModal } from './components/SupportModal';
@@ -27,7 +27,7 @@ import { ShieldCheck, Sparkles } from 'lucide-react';
 
 export default function App() {
   const [, setTick] = useState(0);
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy'>(() => {
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy' | 'checklist'>(() => {
     return store.getUser() ? 'dashboard' : 'landing';
   });
 
@@ -184,6 +184,10 @@ export default function App() {
             {currentView === 'privacy' && (
               <PrivacySecurityView />
             )}
+
+            {currentView === 'checklist' && (
+              <ReviewChecklist />
+            )}
           </main>
 
 
@@ -230,10 +234,7 @@ export default function App() {
           onOpenAuth={() => handleOpenAuth('login')}
         />
 
-        <ReviewChecklistModal
-          isOpen={checklistModalOpen}
-          onClose={() => setChecklistModalOpen(false)}
-        />
+
 
         <PrivacyStringsModal
           isOpen={privacyStringsModalOpen}
@@ -305,7 +306,7 @@ export default function App() {
         onOpenAuth={() => handleOpenAuth('login')}
       />
 
-      <ReviewChecklistModal
+      <ReviewChecklist
         isOpen={checklistModalOpen}
         onClose={() => setChecklistModalOpen(false)}
       />

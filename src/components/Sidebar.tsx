@@ -21,7 +21,7 @@ import { Application, User } from '../types';
 
 interface SidebarProps {
   currentView: string;
-  onNavigate: (view: 'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy') => void;
+  onNavigate: (view: 'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy' | 'checklist') => void;
   onOpenUpload: () => void;
   onOpenAccount: () => void;
   onOpenChecklist?: () => void;
@@ -60,6 +60,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Rejection Solver',
       icon: MessageSquareWarning,
       view: 'rejection' as const
+    },
+    {
+      id: 'checklist',
+      label: 'Pre-flight Checklist',
+      icon: FileCheck2,
+      view: 'checklist' as const
     }
   ];
 
@@ -244,24 +250,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Quick Helpful Tools */}
-          <div className="space-y-1">
-            <div className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-              Guidelines & Checks
-            </div>
-            {onOpenChecklist && (
-              <button
-                onClick={() => {
-                  onOpenChecklist();
-                  setIsMobileOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
-              >
-                <FileCheck2 className="h-4 w-4 text-slate-400" />
-                <span>Pre-flight Checklist</span>
-              </button>
-            )}
-          </div>
+
 
         </div>
 
