@@ -22,7 +22,6 @@ interface LandingPageProps {
   onOpenAuth?: (mode?: 'login' | 'register', tier?: 'free' | 'pro' | 'studio') => void;
   onOpenChecklist?: () => void;
   onOpenPrivacyStrings?: () => void;
-  onOpenCommunity?: (tab?: 'twitter' | 'github' | 'discord' | 'forum') => void;
   onOpenStatus?: () => void;
   onOpenSupport?: () => void;
 }
@@ -34,7 +33,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenAuth,
   onOpenChecklist,
   onOpenPrivacyStrings,
-  onOpenCommunity,
   onOpenStatus,
   onOpenSupport
 }) => {
@@ -1002,7 +1000,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onOpenRejectionAnalyzer={onOpenRejectionAnalyzer}
         onOpenChecklist={onOpenChecklist}
         onOpenPrivacyStrings={onOpenPrivacyStrings}
-        onOpenCommunity={onOpenCommunity}
         onOpenStatus={onOpenStatus}
         onOpenSupport={onOpenSupport}
         onOpenAuth={onOpenAuth as any}

@@ -17,7 +17,6 @@ import { AuthModal } from './components/AuthModal';
 import { AccountModal } from './components/AccountModal';
 import { ReviewChecklistModal } from './components/ReviewChecklistModal';
 import { PrivacyStringsModal } from './components/PrivacyStringsModal';
-import { CommunityModal } from './components/CommunityModal';
 import { StatusPageModal } from './components/StatusPageModal';
 import { SupportModal } from './components/SupportModal';
 import { SiteFooter } from './components/SiteFooter';
@@ -71,8 +70,6 @@ export default function App() {
   // Resource, Community, Support & Status Modals
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
   const [privacyStringsModalOpen, setPrivacyStringsModalOpen] = useState(false);
-  const [communityModalOpen, setCommunityModalOpen] = useState(false);
-  const [communityModalTab, setCommunityModalTab] = useState<'twitter' | 'github' | 'discord' | 'forum'>('twitter');
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
 
@@ -98,11 +95,6 @@ export default function App() {
 
     const report = store.generateSubmissionReport(targetAppId);
     setSubmissionReport(report);
-  };
-
-  const handleOpenCommunity = (tab: 'twitter' | 'github' | 'discord' | 'forum' = 'twitter') => {
-    setCommunityModalTab(tab);
-    setCommunityModalOpen(true);
   };
 
   // If user is authenticated, render real Dashboard layout with Left Sidebar
@@ -198,7 +190,6 @@ export default function App() {
             onOpenRejectionAnalyzer={() => setCurrentView('rejection')}
             onOpenChecklist={() => setChecklistModalOpen(true)}
             onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
-            onOpenCommunity={handleOpenCommunity}
             onOpenStatus={() => setStatusModalOpen(true)}
             onOpenSupport={() => setSupportModalOpen(true)}
             onOpenAuth={(mode) => handleOpenAuth(mode)}
@@ -256,12 +247,6 @@ export default function App() {
           onClose={() => setPrivacyStringsModalOpen(false)}
         />
 
-        <CommunityModal
-          isOpen={communityModalOpen}
-          initialTab={communityModalTab}
-          onClose={() => setCommunityModalOpen(false)}
-        />
-
         <StatusPageModal
           isOpen={statusModalOpen}
           onClose={() => setStatusModalOpen(false)}
@@ -300,7 +285,6 @@ export default function App() {
           onOpenAuth={handleOpenAuth}
           onOpenChecklist={() => setChecklistModalOpen(true)}
           onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
-          onOpenCommunity={handleOpenCommunity}
           onOpenStatus={() => setStatusModalOpen(true)}
           onOpenSupport={() => setSupportModalOpen(true)}
         />
@@ -336,12 +320,6 @@ export default function App() {
       <PrivacyStringsModal
         isOpen={privacyStringsModalOpen}
         onClose={() => setPrivacyStringsModalOpen(false)}
-      />
-
-      <CommunityModal
-        isOpen={communityModalOpen}
-        initialTab={communityModalTab}
-        onClose={() => setCommunityModalOpen(false)}
       />
 
       <StatusPageModal

@@ -6,7 +6,6 @@ interface SiteFooterProps {
   onOpenRejectionAnalyzer?: () => void;
   onOpenChecklist?: () => void;
   onOpenPrivacyStrings?: () => void;
-  onOpenCommunity?: (tab: 'twitter' | 'github' | 'discord' | 'forum') => void;
   onOpenStatus?: () => void;
   onOpenSupport?: () => void;
   onOpenAuth?: (mode: 'login' | 'register') => void;
@@ -17,7 +16,6 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
   onOpenRejectionAnalyzer,
   onOpenChecklist,
   onOpenPrivacyStrings,
-  onOpenCommunity,
   onOpenStatus,
   onOpenSupport,
   onOpenAuth,
@@ -64,7 +62,7 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
           </div>
 
           {/* Nav Columns */}
-          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 text-xs">
+          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 text-xs">
 
             {/* PRODUCT */}
             <div>
@@ -115,33 +113,6 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
                 <li>
                   <button onClick={onOpenPrivacyStrings} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
                     Privacy Strings
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* WHERE */}
-            <div>
-              <h4 className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">WHERE</h4>
-              <ul className="space-y-2.5 text-slate-600 font-medium">
-                <li>
-                  <button onClick={() => onOpenCommunity?.('twitter')} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Twitter / X
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onOpenCommunity?.('github')} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    GitHub
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onOpenCommunity?.('discord')} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Discord Community
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onOpenCommunity?.('forum')} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    iOS Dev Forum
                   </button>
                 </li>
               </ul>

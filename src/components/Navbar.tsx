@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-50 w-full transition-all">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-2">
-        <div className="flex h-14 items-center justify-between rounded-full border border-slate-200/90 bg-white/[0.01] px-5 sm:px-7 backdrop-blur-[6px] shadow-xs" style={{ boxShadow: 'inset 0 1.5px 0 rgba(255, 255, 255, 0.95), 0 8px 30px rgba(0, 0, 0, 0.03)' }}>
+        <div className="flex h-14 items-center justify-between rounded-full border border-slate-200/60 bg-transparent px-5 sm:px-7 backdrop-blur-[4px] shadow-xs" style={{ boxShadow: 'inset 0 1.5px 0 rgba(255, 255, 255, 0.95), 0 8px 30px rgba(0, 0, 0, 0.03)' }}>
           
           {/* Left: Fixit Logo & Name */}
           <div className="flex items-center gap-3">
