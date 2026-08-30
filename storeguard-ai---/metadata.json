@@ -1,0 +1,6 @@
+{
+  "name": "StoreGuard AI - App Store & Google Play Compliance Scanner",
+  "description": "AI-powered pre-submission and post-publishing mobile compliance inspector for indie hackers to prevent App Store rejections and sudden bans.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

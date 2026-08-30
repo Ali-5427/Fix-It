@@ -778,7 +778,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               'Upload it.',
               'Check it.',
               'Fixit.',
-              'Check again.',
               'Submit it.'
             ].map((stepText, idx) => (
               <div 
