@@ -1,12 +1,7 @@
 import { insforge } from './insforge';
 import { User } from '../types';
 import { store } from './store';
-
-const ADMIN_EMAILS = [
-  'founder@tesima-media.com',
-  'jailadeen149@gmail.com',
-  'jmohammadali5427@gmail.com'
-];
+import { ADMIN_EMAILS } from '../config/admin';
 
 export type Unsubscribe = () => void;
 

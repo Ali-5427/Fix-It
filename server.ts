@@ -9,6 +9,8 @@ import {
 } from './src/server/geminiService.js';
 import { APP_STORE_RULES } from './src/engine/rules.js';
 import { APPLE_GUIDELINE_SOURCES } from './src/engine/appleSources.js';
+import { createClient } from '@insforge/sdk';
+import { ADMIN_EMAILS } from './src/config/admin.js';
 
 dotenv.config();
 
@@ -120,12 +122,43 @@ export function createServerApp() {
     });
   });
 
+  const adminAuthMiddleware = async (req: Request, res: Response, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(403).json({ error: 'Forbidden: Missing or invalid authentication token.' });
+    }
+
+    const token = authHeader.substring(7);
+
+    try {
+      const baseUrl = process.env.VITE_INSFORGE_BASE_URL || 'https://37v5babv.us-east.insforge.app';
+      const anonKey = process.env.VITE_INSFORGE_ANON_KEY || 'anon_cb1681eb8340dc585ee724e9248a1f59c2f2e2193f489a867312998c3781b960';
+      const client = createClient({ baseUrl, anonKey });
+      client.setAccessToken(token);
+
+      const { data, error } = await client.auth.getCurrentUser();
+      const user = data?.user;
+
+      if (error || !user || !user.email) {
+        return res.status(403).json({ error: 'Forbidden: Invalid user token.' });
+      }
+
+      if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        return res.status(403).json({ error: 'Forbidden: Access restricted to administrators only.' });
+      }
+
+      next();
+    } catch (err) {
+      return res.status(403).json({ error: 'Forbidden: Verification failed.' });
+    }
+  };
+
   // 8. Admin APIs
-  app.get('/api/admin/stats', (req: Request, res: Response) => {
+  app.get('/api/admin/stats', adminAuthMiddleware, (req: Request, res: Response) => {
     res.status(501).json({ error: 'Admin statistics require a configured production analytics data source.' });
   });
 
-  app.get('/api/admin/rules', (req: Request, res: Response) => {
+  app.get('/api/admin/rules', adminAuthMiddleware, (req: Request, res: Response) => {
     res.json({
       rules: APP_STORE_RULES,
       sources: APPLE_GUIDELINE_SOURCES

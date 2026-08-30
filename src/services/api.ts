@@ -7,6 +7,7 @@ import {
   ScreenshotValidationResult,
   AdminStats 
 } from '../types';
+import { insforge } from './insforge';
 
 export const apiClient = {
   async healthCheck() {
@@ -54,12 +55,22 @@ export const apiClient = {
   },
 
   async getAdminStats(): Promise<AdminStats> {
-    const res = await fetch('/api/admin/stats');
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/admin/stats', { headers });
     return res.json();
   },
 
   async getAdminRules() {
-    const res = await fetch('/api/admin/rules');
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/admin/rules', { headers });
     return res.json();
   }
 };
