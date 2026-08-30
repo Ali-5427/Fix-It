@@ -2,6 +2,12 @@ import { insforge } from './insforge';
 import { User } from '../types';
 import { store } from './store';
 
+const ADMIN_EMAILS = [
+  'founder@tesima-media.com',
+  'jailadeen149@gmail.com',
+  'jmohammadali5427@gmail.com'
+];
+
 export type Unsubscribe = () => void;
 
 export class AuthService {
@@ -35,11 +41,22 @@ export class AuthService {
               }
             }
 
+            const emailLower = (insUser.email || '').toLowerCase();
+            const isWhitelistedAdmin = ADMIN_EMAILS.includes(emailLower);
+            const userRole = isWhitelistedAdmin ? 'admin' : 'developer';
+
+            // Auto-promote role to admin in DB if user is whitelisted but not yet admin in DB
+            if (isWhitelistedAdmin && profileData?.role !== 'admin') {
+              await insforge.auth.setProfile({ role: 'admin' }).catch(err => {
+                console.warn('Could not persist auto-promotion to admin role:', err);
+              });
+            }
+
             const appUser: User = {
               id: insUser.id,
               email: insUser.email || 'developer@apple.dev',
               name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
-              role: (profileData?.role as any) || 'developer',
+              role: userRole,
               tier: userTier,
               trialEndsAt,
               teamName: (profileData?.teamName as string) || 'Apple Developer Team',
@@ -87,11 +104,22 @@ export class AuthService {
             }
           }
 
+          const emailLower = (insUser.email || '').toLowerCase();
+          const isWhitelistedAdmin = ADMIN_EMAILS.includes(emailLower);
+          const userRole = isWhitelistedAdmin ? 'admin' : 'developer';
+
+          // Auto-promote role to admin in DB if user is whitelisted but not yet admin in DB
+          if (isWhitelistedAdmin && profileData?.role !== 'admin') {
+            await insforge.auth.setProfile({ role: 'admin' }).catch(err => {
+              console.warn('Could not persist auto-promotion to admin role:', err);
+            });
+          }
+
           const appUser: User = {
             id: insUser.id,
             email: insUser.email || 'developer@apple.dev',
             name: profileData?.name || insUser.profile?.name || (insUser.email ? insUser.email.split('@')[0] : 'iOS Developer'),
-            role: (profileData?.role as any) || 'developer',
+            role: userRole,
             tier: userTier,
             trialEndsAt,
             teamName: (profileData?.teamName as string) || 'Apple Developer Team',
@@ -145,11 +173,14 @@ export class AuthService {
 
     const trialEndsAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
 
+    const isWhitelistedAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    const userRole = isWhitelistedAdmin ? 'admin' : 'developer';
+
     const appUser: User = {
       id: insUser.id,
       email: insUser.email || email,
       name: name || email.split('@')[0],
-      role: 'developer',
+      role: userRole,
       tier: 'pro',
       trialEndsAt,
       teamName: teamName || 'Indie Studio',
@@ -207,11 +238,22 @@ export class AuthService {
       }
     }
 
+    const emailLower = email.toLowerCase();
+    const isWhitelistedAdmin = ADMIN_EMAILS.includes(emailLower);
+    const userRole = isWhitelistedAdmin ? 'admin' : 'developer';
+
+    // Auto-promote role to admin in DB if user is whitelisted but not yet admin in DB
+    if (isWhitelistedAdmin && profileData?.role !== 'admin') {
+      await insforge.auth.setProfile({ role: 'admin' }).catch(err => {
+        console.warn('Could not persist auto-promotion to admin role:', err);
+      });
+    }
+
     const appUser: User = {
       id: insUser.id,
       email,
       name: profileData?.name || insUser.profile?.name || email.split('@')[0],
-      role: (profileData?.role as any) || 'developer',
+      role: userRole,
       tier: userTier,
       trialEndsAt,
       teamName: (profileData?.teamName as string) || 'Apple Developer Team',
@@ -253,7 +295,6 @@ export class AuthService {
     
     const profileUpdate: Record<string, any> = {};
     if (updates.name) profileUpdate.name = updates.name;
-    if (updates.role) profileUpdate.role = updates.role;
     if (updates.tier) profileUpdate.tier = updates.tier;
     if (updates.teamName) profileUpdate.teamName = updates.teamName;
     if (updates.appleTeamId) profileUpdate.appleTeamId = updates.appleTeamId;
