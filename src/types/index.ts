@@ -200,7 +200,7 @@ export interface NormalizedAppInspection {
     format: string;
     deviceTarget: string;
     aspectRatio: string;
-    isValidSize: boolean;
+    isValidSize?: boolean;
     issues?: string[];
     precision?: 'EXACT' | 'UNKNOWN';
   }[];

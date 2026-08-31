@@ -348,7 +348,7 @@ function evaluateRule(ruleId: string, inspection: NormalizedAppInspection, ruleW
           verify: 'Check pixel dimensions in Preview or the Finder Get Info panel.'
         };
       }
-      const invalid = inspection.screenshots.filter(shot => !shot.isValidSize);
+      const invalid = inspection.screenshots.filter(shot => shot.isValidSize === false);
       if (invalid.length === 0) return empty;
       return {
         triggered: true,

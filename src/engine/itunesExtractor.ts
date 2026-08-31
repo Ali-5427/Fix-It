@@ -44,7 +44,6 @@ export async function extractFromItunesLookup(appNameOrId: string): Promise<Norm
           format: 'png',
           deviceTarget: 'iPhone',
           aspectRatio: '9:19.5',
-          isValidSize: true, // Mark valid as it comes directly from App Store
           precision: 'UNKNOWN'
         });
       });
@@ -60,7 +59,6 @@ export async function extractFromItunesLookup(appNameOrId: string): Promise<Norm
           format: 'png',
           deviceTarget: 'iPad',
           aspectRatio: '3:4',
-          isValidSize: true, // Mark valid as it comes directly from App Store
           precision: 'UNKNOWN'
         });
       });
