@@ -64,3 +64,24 @@ USING (
 WITH CHECK (
   app_id IN (SELECT id FROM apps WHERE user_id = auth.uid())
 );
+
+-- Create app_store_connect_keys table
+CREATE TABLE IF NOT EXISTS app_store_connect_keys (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  issuer_id TEXT NOT NULL,
+  key_id TEXT NOT NULL,
+  encrypted_pem TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS for app_store_connect_keys
+ALTER TABLE app_store_connect_keys ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for app_store_connect_keys
+CREATE POLICY "Users can manage their own App Store Connect keys" 
+ON app_store_connect_keys 
+FOR ALL 
+TO authenticated 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);

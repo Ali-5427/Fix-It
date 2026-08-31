@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   User as UserIcon, 
@@ -23,6 +23,7 @@ import {
 import { store } from '../services/store';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { apiClient } from '../services/api';
 import { getTrialDaysRemaining, isTrialActive } from '../utils/trial';
 
 interface AccountModalProps {
@@ -30,15 +31,17 @@ interface AccountModalProps {
   onClose: () => void;
   user: User | null;
   onOpenAuth: () => void;
+  onAuditApp?: (inspection: any, auditRun: any) => void;
 }
 
 export const AccountModal: React.FC<AccountModalProps> = ({
   isOpen,
   onClose,
   user,
-  onOpenAuth
+  onOpenAuth,
+  onAuditApp
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'api' | 'preferences'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'api' | 'preferences' | 'connections'>('profile');
   
   // Profile form state
   const [name, setName] = useState(user?.name || '');
@@ -56,6 +59,89 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  // Connections Tab State
+  const [issuerId, setIssuerId] = useState('');
+  const [keyId, setKeyId] = useState('');
+  const [privateKeyPem, setPrivateKeyPem] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; maskedKey?: string; apps: any[] }>({ connected: false, apps: [] });
+  const [isLoadingApps, setIsLoadingApps] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [p8FileName, setP8FileName] = useState('');
+
+  // Fetch connection status on mount or tab change
+  const fetchConnection = async () => {
+    setIsLoadingApps(true);
+    setConnectError(null);
+    try {
+      const res = await apiClient.listConnectApps();
+      setConnectionStatus(res);
+    } catch (err: any) {
+      setConnectError(err.message || 'Failed to check connection status.');
+    } finally {
+      setIsLoadingApps(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'connections') {
+      fetchConnection();
+    }
+  }, [activeTab]);
+
+  const handleSaveConnection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issuerId || !keyId || !privateKeyPem) {
+      setConnectError('Please fill out all fields and upload your .p8 key file.');
+      return;
+    }
+    setIsSavingKey(true);
+    setConnectError(null);
+    try {
+      await apiClient.saveConnectKey(issuerId, keyId, privateKeyPem);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2000);
+      await fetchConnection();
+      setIssuerId('');
+      setKeyId('');
+      setPrivateKeyPem('');
+      setP8FileName('');
+    } catch (err: any) {
+      setConnectError(err.message || 'Verification failed. Please check your credentials.');
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!window.confirm('Are you sure you want to disconnect and delete your key from the server?')) {
+      return;
+    }
+    try {
+      await apiClient.removeConnectKey();
+      setConnectionStatus({ connected: false, apps: [] });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2000);
+    } catch (err: any) {
+      setConnectError(err.message || 'Failed to disconnect key.');
+    }
+  };
+
+  const handleAuditApp = async (appId: string) => {
+    setIsLoadingApps(true);
+    setConnectError(null);
+    try {
+      const res = await apiClient.checkConnectApp(appId);
+      if (onAuditApp) {
+        onAuditApp(res.inspection, res.auditRun);
+      }
+    } catch (err: any) {
+      setConnectError(err.message || 'Audit scan failed. Please verify your API permissions.');
+    } finally {
+      setIsLoadingApps(false);
+    }
+  };
 
   if (!isOpen || !user) return null;
 
@@ -187,6 +273,18 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           >
             <Key className="h-3.5 w-3.5" />
             API & CI/CD Keys
+          </button>
+
+          <button
+            onClick={() => setActiveTab('connections')}
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'connections'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Connections
           </button>
 
           <button
@@ -480,6 +578,200 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: Connections */}
+          {activeTab === 'connections' && (
+            <div className="space-y-5">
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 uppercase font-mono mb-1">App Store Connect API Integration</h4>
+                <p className="text-xs text-slate-500">
+                  Connect your App Store Connect account to list and scan live metadata, in-app purchases, and subscription groups directly.
+                </p>
+              </div>
+
+              {connectError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800">
+                  {connectError}
+                </div>
+              )}
+
+              {/* Status Header */}
+              <div className="rounded-xl border border-slate-200 p-4 bg-white space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-500 block">Connection Status</span>
+                    <strong className="text-sm font-bold font-mono text-slate-900 flex items-center gap-1.5 mt-0.5">
+                      {connectionStatus.connected ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <span>Connected ({connectionStatus.maskedKey})</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                          <span className="text-slate-500 font-sans">Disconnected</span>
+                        </>
+                      )}
+                    </strong>
+                  </div>
+
+                  {connectionStatus.connected && (
+                    <button
+                      type="button"
+                      onClick={handleDisconnect}
+                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-600 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Disconnect
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Guide/Walkthrough */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <h5 className="text-xs font-bold text-slate-700 uppercase font-mono">How to get your credentials</h5>
+                <ol className="text-xs text-slate-600 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
+                  <li>
+                    Log in to <strong className="font-semibold text-slate-800">App Store Connect</strong> and head to <strong className="font-semibold text-slate-800">Users and Access → Integrations</strong>.
+                  </li>
+                  <li>
+                    Choose <strong className="font-semibold text-slate-800">App Store Connect API</strong>, click the <strong className="font-semibold text-slate-800">+</strong> button, and generate a new key with <strong className="font-semibold text-slate-800">Admin</strong> or <strong className="font-semibold text-slate-800">Developer</strong> access.
+                  </li>
+                  <li>
+                    Copy the <strong className="font-semibold text-slate-800">Issuer ID</strong> and <strong className="font-semibold text-slate-800">Key ID</strong>, download the private key file (<strong className="font-semibold text-slate-800">.p8</strong>), and configure them here.
+                  </li>
+                </ol>
+                <div className="pt-2">
+                  <a
+                    href="https://developer.apple.com/documentation/appstoreconnectapi/creating_an_api_key_for_app_store_connect_api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1"
+                  >
+                    <span>Read Apple's official documentation</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Form (Only show if disconnected) */}
+              {!connectionStatus.connected && (
+                <form onSubmit={handleSaveConnection} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-750 font-mono uppercase">Issuer ID</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 6053b063-7116-488b-a112-870097f37189"
+                        value={issuerId}
+                        onChange={(e) => setIssuerId(e.target.value.trim())}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-750 font-mono uppercase">Key ID</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 2X9R4A8D5F"
+                        value={keyId}
+                        onChange={(e) => setKeyId(e.target.value.trim().toUpperCase())}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-750 font-mono uppercase">Private Key File (.p8)</label>
+                    <div className="flex items-center gap-3">
+                      <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-slate-50/50 rounded-xl px-4 py-6 cursor-pointer transition-all">
+                        <Smartphone className="h-6 w-6 text-slate-400 mb-1.5" />
+                        <span className="text-xs text-slate-600 font-semibold flex items-center justify-center text-center">
+                          {p8FileName ? p8FileName : 'Upload AuthKey_XXXXXX.p8'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5">PEM private key file</span>
+                        <input
+                          type="file"
+                          accept=".p8"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setP8FileName(file.name);
+                              const reader = new FileReader();
+                              reader.onload = (evt) => {
+                                setPrivateKeyPem(evt.target?.result as string);
+                              };
+                              reader.readAsText(file);
+                            }
+                          }}
+                          className="hidden"
+                          required
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingKey}
+                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                  >
+                    {isSavingKey ? 'Verifying & Saving...' : 'Connect Apple Account'}
+                  </button>
+                </form>
+              )}
+
+              {/* Apps List (Only show if connected) */}
+              {connectionStatus.connected && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h5 className="text-xs font-bold text-slate-700 uppercase font-mono">Select App to Scan</h5>
+                    <button
+                      type="button"
+                      onClick={fetchConnection}
+                      disabled={isLoadingApps}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isLoadingApps ? 'animate-spin' : ''}`} />
+                      <span>Refresh list</span>
+                    </button>
+                  </div>
+
+                  {isLoadingApps && connectionStatus.apps.length === 0 ? (
+                    <div className="py-8 flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="h-6 w-6 text-slate-400 animate-spin" />
+                      <span className="text-xs text-slate-500">Retrieving apps from App Store Connect...</span>
+                    </div>
+                  ) : connectionStatus.apps.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
+                      No apps found in your Apple developer account.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2.5 max-h-[250px] overflow-y-auto pr-1">
+                      {connectionStatus.apps.map((app) => (
+                        <div key={app.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white shadow-3xs">
+                          <div>
+                            <strong className="text-xs text-slate-900 block font-semibold">{app.name}</strong>
+                            <span className="text-[10px] text-slate-500 block font-mono mt-0.5">{app.bundleId} • SKU: {app.sku || 'N/A'}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAuditApp(app.id)}
+                            disabled={isLoadingApps}
+                            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            Scan App
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

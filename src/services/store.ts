@@ -378,7 +378,7 @@ class AppStore {
     this.inspectionsMap[id] = inspection;
 
     // Run initial deterministic audit
-    const initialAudit = evaluateInspection(inspection, id, newApp.currentBuild, newApp.currentVersion);
+    const initialAudit = evaluateInspection(inspection, id, newApp.currentBuild, newApp.currentVersion, [], !!inspection.metadata?.listingProvided);
     this.auditsMap[id] = [initialAudit];
 
     newApp.lastAuditDate = initialAudit.createdAt;
@@ -603,7 +603,7 @@ class AppStore {
     // Carry forward findings states if unchanged
     const existingFindings = previousAudit ? previousAudit.findings : [];
 
-    const newAudit = evaluateInspection(inspection, appId, build, version, existingFindings);
+    const newAudit = evaluateInspection(inspection, appId, build, version, existingFindings, !!inspection.metadata?.listingProvided);
 
     // AI enhancement layer (server-side Gemini)
     try {

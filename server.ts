@@ -12,6 +12,15 @@ import { APPLE_GUIDELINE_SOURCES } from './src/engine/appleSources.js';
 import { extractFromItunesLookup } from './src/engine/itunesExtractor.js';
 import { evaluateInspection } from './src/engine/evaluator.js';
 import { ADMIN_EMAILS } from './src/config/admin.js';
+import { createClient } from '@insforge/sdk';
+import { 
+  generateAppStoreConnectJWT, 
+  fetchAppsFromConnect, 
+  fetchAppDetails, 
+  encryptKey, 
+  decryptKey 
+} from './src/server/appStoreConnect.js';
+import { extractFromAppStoreConnect } from './src/engine/appStoreConnectExtractor.js';
 
 dotenv.config();
 dotenv.config({ path: '.env.local' });
@@ -197,6 +206,271 @@ export function createServerApp() {
     });
   });
 
+  // Connect Rate Limiter Cache
+  const connectRateLimitCache = new Map<string, { count: number; resetTime: number }>();
+
+  function connectRateLimiter(req: Request, res: Response, next: () => void) {
+    const ip = (req.ip || req.headers['x-forwarded-for'] || 'unknown') as string;
+    const now = Date.now();
+    const limit = 60; // 60 requests per hour
+    const timeframe = 60 * 60 * 1000;
+
+    const record = connectRateLimitCache.get(ip);
+    if (!record) {
+      connectRateLimitCache.set(ip, { count: 1, resetTime: now + timeframe });
+      return next();
+    }
+
+    if (now > record.resetTime) {
+      record.count = 1;
+      record.resetTime = now + timeframe;
+      return next();
+    }
+
+    if (record.count >= limit) {
+      return res.status(429).json({ error: 'Too many connection attempts. Please try again later.' });
+    }
+
+    record.count++;
+    next();
+  }
+
+  // User Authentication Middleware
+  const userAuthMiddleware = async (req: Request, res: Response, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid authentication token.' });
+    }
+
+    const token = authHeader.substring(7);
+    const baseUrl = process.env.VITE_INSFORGE_BASE_URL!;
+    const anonKey = process.env.VITE_INSFORGE_ANON_KEY!;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(`${baseUrl}/api/auth/sessions/current`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': anonKey,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid session token.' });
+      }
+
+      const data = (await response.json()) as any;
+      const user = data?.user;
+
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid user.' });
+      }
+
+      (req as any).user = user;
+      (req as any).token = token;
+      next();
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.error('[REDACTED] User verification failed:', err.message);
+      return res.status(401).json({ error: 'Unauthorized: Session verification failed.' });
+    }
+  };
+
+  // App Store Connect APIs
+  app.post('/api/connect/save-key', userAuthMiddleware, connectRateLimiter, async (req: Request, res: Response) => {
+    const { issuerId, keyId, privateKeyPem } = req.body;
+    if (!issuerId || !keyId || !privateKeyPem) {
+      return res.status(400).json({ error: 'Issuer ID, Key ID, and Private Key (PEM) are required.' });
+    }
+
+    const secret = process.env.CONNECT_KEY_ENCRYPTION_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: 'Server configuration error: Key encryption secret missing.' });
+    }
+
+    const user = (req as any).user;
+    const token = (req as any).token;
+
+    try {
+      const encryptedPem = encryptKey(privateKeyPem, secret);
+
+      const userClient = createClient({
+        baseUrl: process.env.VITE_INSFORGE_BASE_URL || '',
+        anonKey: process.env.VITE_INSFORGE_ANON_KEY || '',
+        isServerMode: true
+      });
+      userClient.setAuthToken(token);
+
+      // Clean existing key for user and save new
+      await userClient.database.from('app_store_connect_keys').delete().eq('user_id', user.id);
+      const { error } = await userClient.database.from('app_store_connect_keys').insert([{
+        user_id: user.id,
+        issuer_id: issuerId,
+        key_id: keyId,
+        encrypted_pem: encryptedPem
+      }]);
+
+      if (error) {
+        console.error('[REDACTED] Error storing key:', error.message);
+        return res.status(500).json({ error: 'Failed to save connection details to database.' });
+      }
+
+      res.json({
+        success: true,
+        keyId,
+        issuerId,
+        maskedKey: `Key ending in ...${keyId.slice(-4)}`
+      });
+    } catch (err: any) {
+      console.error('[REDACTED] Save key error:', err.message);
+      res.status(500).json({ error: 'An unexpected error occurred while saving the key.' });
+    }
+  });
+
+  app.post('/api/connect/list-apps', userAuthMiddleware, connectRateLimiter, async (req: Request, res: Response) => {
+    const secret = process.env.CONNECT_KEY_ENCRYPTION_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: 'Server configuration error: Key encryption secret missing.' });
+    }
+
+    const user = (req as any).user;
+    const token = (req as any).token;
+
+    try {
+      const userClient = createClient({
+        baseUrl: process.env.VITE_INSFORGE_BASE_URL || '',
+        anonKey: process.env.VITE_INSFORGE_ANON_KEY || '',
+        isServerMode: true
+      });
+      userClient.setAuthToken(token);
+
+      const { data, error } = await userClient.database
+        .from('app_store_connect_keys')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[REDACTED] Fetch key failed:', error.message);
+        return res.status(500).json({ error: 'Failed to read connection details.' });
+      }
+
+      if (!data) {
+        return res.json({ apps: [], connected: false });
+      }
+
+      const decryptedPem = decryptKey(data.encrypted_pem, secret);
+      const jwt = generateAppStoreConnectJWT(data.issuer_id, data.key_id, decryptedPem);
+
+      const apps = await fetchAppsFromConnect(jwt);
+      res.json({
+        connected: true,
+        maskedKey: `Key ending in ...${data.key_id.slice(-4)}`,
+        apps: apps.map((a: any) => ({
+          id: a.id,
+          name: a.attributes.name,
+          bundleId: a.attributes.bundleId,
+          sku: a.attributes.sku
+        }))
+      });
+    } catch (err: any) {
+      console.error('[REDACTED] List apps error:', err.message);
+      res.status(500).json({ error: err.message || 'Failed to list apps from App Store Connect.' });
+    }
+  });
+
+  app.post('/api/connect/check-app', userAuthMiddleware, connectRateLimiter, async (req: Request, res: Response) => {
+    const { appId } = req.body;
+    if (!appId) {
+      return res.status(400).json({ error: 'appId parameter is required.' });
+    }
+
+    const secret = process.env.CONNECT_KEY_ENCRYPTION_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: 'Server configuration error: Key encryption secret missing.' });
+    }
+
+    const user = (req as any).user;
+    const token = (req as any).token;
+
+    try {
+      const userClient = createClient({
+        baseUrl: process.env.VITE_INSFORGE_BASE_URL || '',
+        anonKey: process.env.VITE_INSFORGE_ANON_KEY || '',
+        isServerMode: true
+      });
+      userClient.setAuthToken(token);
+
+      const { data, error } = await userClient.database
+        .from('app_store_connect_keys')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error || !data) {
+        return res.status(404).json({ error: 'App Store Connect credentials not found.' });
+      }
+
+      const decryptedPem = decryptKey(data.encrypted_pem, secret);
+      const jwt = generateAppStoreConnectJWT(data.issuer_id, data.key_id, decryptedPem);
+
+      const details = await fetchAppDetails(jwt, appId);
+      const inspection = extractFromAppStoreConnect(details);
+
+      const auditRun = evaluateInspection(
+        inspection,
+        `connect_${inspection.bundleId}`,
+        '1',
+        inspection.version,
+        [],
+        true // isListingOnly = true
+      );
+
+      res.json({
+        inspection,
+        auditRun
+      });
+    } catch (err: any) {
+      console.error('[REDACTED] Check app error:', err.message);
+      res.status(500).json({ error: err.message || 'Failed to check app details.' });
+    }
+  });
+
+  app.delete('/api/connect/remove-key', userAuthMiddleware, connectRateLimiter, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const token = (req as any).token;
+
+    try {
+      const userClient = createClient({
+        baseUrl: process.env.VITE_INSFORGE_BASE_URL || '',
+        anonKey: process.env.VITE_INSFORGE_ANON_KEY || '',
+        isServerMode: true
+      });
+      userClient.setAuthToken(token);
+
+      const { error } = await userClient.database
+        .from('app_store_connect_keys')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('[REDACTED] Delete key failed:', error.message);
+        return res.status(500).json({ error: 'Failed to delete App Store Connect key.' });
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error('[REDACTED] Delete key error:', err.message);
+      res.status(500).json({ error: 'An unexpected error occurred.' });
+    }
+  });
+
   const adminAuthMiddleware = async (req: Request, res: Response, next: any) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -264,6 +538,9 @@ export function createServerApp() {
 export function startServer() {
   if (!process.env.VITE_INSFORGE_BASE_URL || !process.env.VITE_INSFORGE_ANON_KEY) {
     throw new Error('CRITICAL CONFIGURATION ERROR: Environment variables VITE_INSFORGE_BASE_URL and VITE_INSFORGE_ANON_KEY must be set.');
+  }
+  if (!process.env.CONNECT_KEY_ENCRYPTION_SECRET) {
+    throw new Error('CRITICAL CONFIGURATION ERROR: Environment variable CONNECT_KEY_ENCRYPTION_SECRET must be set for App Store Connect API encryption.');
   }
   const app = createServerApp();
   const PORT = process.env.PORT || 3000;

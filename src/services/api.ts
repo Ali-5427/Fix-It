@@ -85,5 +85,75 @@ export const apiClient = {
       throw new Error(err.error || 'Failed to check app via iTunes search');
     }
     return res.json();
+  },
+
+  async saveConnectKey(issuerId: string, keyId: string, privateKeyPem: string): Promise<{ success: boolean; maskedKey: string }> {
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/connect/save-key', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ issuerId, keyId, privateKeyPem })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to save App Store Connect key.');
+    }
+    return res.json();
+  },
+
+  async listConnectApps(): Promise<{ connected: boolean; maskedKey?: string; apps: any[] }> {
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/connect/list-apps', {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to list apps from App Store Connect.');
+    }
+    return res.json();
+  },
+
+  async checkConnectApp(appId: string): Promise<{ inspection: NormalizedAppInspection; auditRun: any }> {
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/connect/check-app', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ appId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to run audit check.');
+    }
+    return res.json();
+  },
+
+  async removeConnectKey(): Promise<{ success: boolean }> {
+    const token = await insforge.getHttpClient().getValidAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch('/api/connect/remove-key', {
+      method: 'DELETE',
+      headers
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to disconnect key.');
+    }
+    return res.json();
   }
 };

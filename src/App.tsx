@@ -119,13 +119,12 @@ export default function App() {
         userId: 'anonymous',
         name: inspection.appName,
         bundleId: inspection.bundleId,
-        platform: 'ios',
         currentVersion: inspection.version,
         currentBuild: '1',
-        status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        primaryCategory: inspection.metadata.category
+        primaryCategory: inspection.metadata.category || 'Utilities',
+        remainingIssuesCount: auditRun.openFindings
       };
 
       setTryNowResult({
@@ -177,6 +176,19 @@ export default function App() {
   const handleAuditCompleted = (appId: string, auditId: string) => {
     store.selectApp(appId);
     store.setActiveAudit(auditId);
+    setCurrentView('audit');
+  };
+
+  const handleConnectAuditCompleted = (inspection: any, auditRun: any) => {
+    store.createApp({
+      name: inspection.metadata.name,
+      bundleId: inspection.bundleId,
+      primaryCategory: inspection.metadata.category,
+      currentVersion: inspection.version,
+      currentBuild: inspection.build,
+      inspection
+    });
+    setAccountModalOpen(false);
     setCurrentView('audit');
   };
 
@@ -321,6 +333,7 @@ export default function App() {
           onClose={() => setAccountModalOpen(false)}
           user={user}
           onOpenAuth={() => handleOpenAuth('login')}
+          onAuditApp={handleConnectAuditCompleted}
         />
 
 
@@ -481,6 +494,7 @@ export default function App() {
         onClose={() => setAccountModalOpen(false)}
         user={user}
         onOpenAuth={() => handleOpenAuth('login')}
+        onAuditApp={handleConnectAuditCompleted}
       />
 
       <ReviewChecklist
