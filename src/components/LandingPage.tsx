@@ -37,7 +37,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenSupport
 }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [selectedIssueFix, setSelectedIssueFix] = useState<'location' | 'subscription' | 'metadata' | null>('location');
+  const [selectedIssueFix, setSelectedIssueFix] = useState<'location' | 'subscription' | 'metadata' | null>(null);
   const [showRecheckSuccess, setShowRecheckSuccess] = useState(false);
 
   const handleSimulateRecheck = () => {
@@ -169,7 +169,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
 
                   <button
-                    onClick={handleSimulateRecheck}
+                    onClick={onStartAudit}
                     className="flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs text-slate-700 font-medium transition-colors cursor-pointer border border-slate-200"
                   >
                     <RefreshCw className="h-3 w-3 text-slate-500" />
@@ -211,10 +211,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
 
                     <button
-                      onClick={() => setSelectedIssueFix(selectedIssueFix === 'location' ? null : 'location')}
+                      onClick={onStartAudit}
                       className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0 self-start sm:self-center transition-colors cursor-pointer"
                     >
-                      <span>{selectedIssueFix === 'location' ? 'Hide fix' : 'See what to fix'}</span>
+                      <span>See what to fix</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -253,10 +253,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
 
                     <button
-                      onClick={() => setSelectedIssueFix(selectedIssueFix === 'subscription' ? null : 'subscription')}
+                      onClick={onStartAudit}
                       className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0 self-start sm:self-center transition-colors cursor-pointer"
                     >
-                      <span>{selectedIssueFix === 'subscription' ? 'Hide fix' : 'See what to fix'}</span>
+                      <span>See what to fix</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -291,10 +291,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
 
                     <button
-                      onClick={() => setSelectedIssueFix(selectedIssueFix === 'metadata' ? null : 'metadata')}
+                      onClick={onStartAudit}
                       className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0 self-start sm:self-center transition-colors cursor-pointer"
                     >
-                      <span>{selectedIssueFix === 'metadata' ? 'Hide fix' : 'See what to fix'}</span>
+                      <span>See what to fix</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>

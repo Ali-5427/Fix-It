@@ -85,6 +85,30 @@ export default function App() {
     setAuthModalOpen(true);
   };
 
+  const handleLandingStartAudit = () => {
+    if (user) {
+      handleStartAudit();
+    } else {
+      handleOpenAuth('register', 'free');
+    }
+  };
+
+  const handleLandingExploreDemo = () => {
+    if (user) {
+      handleStartAudit();
+    } else {
+      handleOpenAuth('register', 'pro');
+    }
+  };
+
+  const handleLandingRejectionAnalyzer = () => {
+    if (user) {
+      setCurrentView('rejection');
+    } else {
+      handleOpenAuth('login');
+    }
+  };
+
   const handleAuditCompleted = (appId: string, auditId: string) => {
     store.selectApp(appId);
     store.setActiveAudit(auditId);
@@ -262,7 +286,7 @@ export default function App() {
       <Navbar
         currentView={currentView}
         onNavigate={(v) => setCurrentView(v)}
-        onOpenUpload={() => setUploadModalOpen(true)}
+        onOpenUpload={handleLandingStartAudit}
         onOpenAuth={handleOpenAuth}
         onOpenAccount={() => setAccountModalOpen(true)}
         user={user}
@@ -273,14 +297,14 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1">
         <LandingPage
-          onStartAudit={handleStartAudit}
-          onExploreDemo={handleStartAudit}
-          onOpenRejectionAnalyzer={() => setCurrentView('rejection')}
+          onStartAudit={handleLandingStartAudit}
+          onExploreDemo={handleLandingExploreDemo}
+          onOpenRejectionAnalyzer={handleLandingRejectionAnalyzer}
           onOpenAuth={handleOpenAuth}
-          onOpenChecklist={() => setChecklistModalOpen(true)}
-          onOpenPrivacyStrings={() => setPrivacyStringsModalOpen(true)}
-          onOpenStatus={() => setStatusModalOpen(true)}
-          onOpenSupport={() => setSupportModalOpen(true)}
+          onOpenChecklist={() => user ? setChecklistModalOpen(true) : handleOpenAuth('register')}
+          onOpenPrivacyStrings={() => user ? setPrivacyStringsModalOpen(true) : handleOpenAuth('register')}
+          onOpenStatus={() => user ? setStatusModalOpen(true) : handleOpenAuth('register')}
+          onOpenSupport={() => user ? setSupportModalOpen(true) : handleOpenAuth('register')}
         />
       </main>
 

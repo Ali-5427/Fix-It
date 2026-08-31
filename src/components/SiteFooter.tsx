@@ -62,7 +62,7 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
           </div>
 
           {/* Nav Columns */}
-          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 text-xs">
+          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8 text-xs">
 
             {/* PRODUCT */}
             <div>
@@ -91,32 +91,7 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
               </ul>
             </div>
 
-            {/* RESOURCES */}
-            <div>
-              <h4 className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">RESOURCES</h4>
-              <ul className="space-y-2.5 text-slate-600 font-medium">
-                <li>
-                  <button onClick={onOpenRejectionAnalyzer} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Rejection Solver
-                  </button>
-                </li>
-                <li>
-                  <button onClick={onStartAudit} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Live Demo App
-                  </button>
-                </li>
-                <li>
-                  <button onClick={onOpenChecklist} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Review Checklist
-                  </button>
-                </li>
-                <li>
-                  <button onClick={onOpenPrivacyStrings} className="hover:text-blue-600 transition-colors cursor-pointer text-left">
-                    Privacy Strings
-                  </button>
-                </li>
-              </ul>
-            </div>
+
 
             {/* CONNECT */}
             <div>
