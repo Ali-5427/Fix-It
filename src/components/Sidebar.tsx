@@ -57,13 +57,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'rejection',
-      label: 'Rejection Solver',
+      label: 'Fix a Rejection',
       icon: MessageSquareWarning,
       view: 'rejection' as const
     },
     {
       id: 'checklist',
-      label: 'Pre-flight Checklist',
+      label: 'Final Checklist',
       icon: FileCheck2,
       view: 'checklist' as const
     }
@@ -160,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 text-xs font-bold transition-all shadow-sm shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>+ Check a new app</span>
+            <span>Check a new app</span>
           </button>
         </div>
 
