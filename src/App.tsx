@@ -144,6 +144,10 @@ export default function App() {
   };
 
   const handleOpenAuth = (mode: 'login' | 'register' | 'forgot' = 'login', tier: 'free' | 'pro' | 'studio' = 'pro') => {
+    if (user) {
+      setAccountModalOpen(true);
+      return;
+    }
     setAuthModalMode(mode);
     setAuthModalTier(tier);
     setAuthModalOpen(true);
@@ -251,6 +255,9 @@ export default function App() {
                   setUploadModalOpen(true);
                 }}
                 onNavigate={(view) => setCurrentView(view)}
+                onTryNow={handleTryNow}
+                tryNowError={tryNowError}
+                isTryNowLoading={tryNowLoading}
               />
             )}
 
@@ -382,7 +389,7 @@ export default function App() {
     );
   }
 
-  if (!user && tryNowResult) {
+  if (tryNowResult) {
     return (
       <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
         <header className="sticky top-0 z-50 w-full transition-all">

@@ -14,6 +14,7 @@ import {
 import { Application, User, AuditRun } from '../types';
 import { calculateReadinessScore } from '../engine/evaluator';
 import { store } from '../services/store';
+import { TryItNowSearch } from './TryItNowSearch';
 
 interface DashboardProps {
   user: User | null;
@@ -22,6 +23,9 @@ interface DashboardProps {
   onCheckNewApp: () => void;
   onCheckNewVersion: (appId: string) => void;
   onNavigate: (view: 'landing' | 'dashboard' | 'audit' | 'rejection' | 'metadata' | 'screenshots' | 'admin' | 'privacy') => void;
+  onTryNow?: (query: string) => void;
+  tryNowError?: string | null;
+  isTryNowLoading?: boolean;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -30,7 +34,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenApp,
   onCheckNewApp,
   onCheckNewVersion,
-  onNavigate
+  onNavigate,
+  onTryNow,
+  tryNowError = null,
+  isTryNowLoading = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -206,6 +213,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Try it on any App Store app */}
+        {onTryNow && (
+          <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl shrink-0 space-y-2.5">
+            <div>
+              <h4 className="text-xs font-bold text-slate-800 font-mono">Try it on any App Store app</h4>
+              <p className="text-[10px] text-slate-500">Run a quick public listing check on any live App Store app instantly. No authentication or file upload required.</p>
+            </div>
+            <TryItNowSearch
+              onTryNow={onTryNow}
+              tryNowError={tryNowError}
+              isTryNowLoading={isTryNowLoading}
+              placeholder="Enter App Store URL, App ID, or search query..."
+            />
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="relative shrink-0">
