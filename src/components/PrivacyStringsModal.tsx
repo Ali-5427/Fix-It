@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { 
   KeyRound, 
   Copy, 
@@ -152,6 +153,7 @@ interface PrivacyStringsModalProps {
 }
 
 export const PrivacyStringsModal: React.FC<PrivacyStringsModalProps> = ({ isOpen, onClose }) => {
+  useScrollLock(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -236,7 +238,7 @@ export const PrivacyStringsModal: React.FC<PrivacyStringsModalProps> = ({ isOpen
         </div>
 
         {/* Content List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
           {filtered.map(spec => (
             <div
               key={spec.key}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { 
   CheckSquare, 
   ShieldCheck, 
@@ -136,6 +137,7 @@ interface ReviewChecklistProps {
 }
 
 export const ReviewChecklist: React.FC<ReviewChecklistProps> = ({ isOpen, onClose }) => {
+  useScrollLock(isOpen);
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [copied, setCopied] = useState(false);
@@ -245,7 +247,7 @@ export const ReviewChecklist: React.FC<ReviewChecklistProps> = ({ isOpen, onClos
       </div>
 
       {/* Checklist Content Body */}
-      <div className={`flex-1 overflow-y-auto pr-1 scrollbar-none space-y-3 pb-6 ${isOpen ? 'px-6 pt-4' : ''}`}>
+      <div className={`flex-1 overflow-y-auto pr-1 scrollbar-none space-y-3 pb-6 min-h-0 ${isOpen ? 'px-6 pt-4' : ''}`}>
         {filteredItems.map(item => {
           const isChecked = !!checkedIds[item.id];
           return (

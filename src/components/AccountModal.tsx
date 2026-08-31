@@ -25,6 +25,7 @@ import { authService } from '../services/authService';
 import { User } from '../types';
 import { apiClient } from '../services/api';
 import { getTrialDaysRemaining, isTrialActive } from '../utils/trial';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   onOpenAuth,
   onAuditApp
 }) => {
+  useScrollLock(isOpen);
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'api' | 'preferences' | 'connections'>('profile');
   
   // Profile form state
@@ -301,7 +303,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* Tab Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
           
           {savedSuccess && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 animate-in fade-in">

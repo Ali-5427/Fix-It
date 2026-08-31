@@ -14,6 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { SubmissionReport } from '../types';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface SubmissionReportModalProps {
   report: SubmissionReport | null;
@@ -24,6 +25,7 @@ export const SubmissionReportModal: React.FC<SubmissionReportModalProps> = ({
   report,
   onClose
 }) => {
+  useScrollLock(!!report);
   if (!report) return null;
 
   const [copiedMd, setCopiedMd] = useState(false);

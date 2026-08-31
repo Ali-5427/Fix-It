@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { store } from '../services/store';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialTier = 'pro',
   onSuccess
 }) => {
+  useScrollLock(isOpen);
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
   const [tier, setTier] = useState<'free' | 'pro' | 'studio'>(initialTier);
   const [email, setEmail] = useState('');

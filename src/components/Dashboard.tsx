@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="w-full h-full bg-slate-50/50 flex flex-col p-6 overflow-hidden">
-      <div className="max-w-6xl w-full mx-auto flex-1 flex flex-col overflow-hidden space-y-4">
+      <div className="max-w-6xl w-full mx-auto flex-1 flex flex-col overflow-hidden min-h-0 space-y-4">
         
         {/* Welcome & Primary Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/85 pb-4 shrink-0">
@@ -246,7 +246,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
           
           {/* Left Column: Apps List (Scrollable) */}
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none h-full">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none h-full min-h-0">
             {apps.length === 0 ? (
               /* EMPTY STATE */
               <div id="dashboard_empty_state" className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-3xs">

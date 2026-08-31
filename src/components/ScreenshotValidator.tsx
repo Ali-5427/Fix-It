@@ -15,26 +15,7 @@ import { apiClient } from '../services/api';
 import { ScreenshotValidationResult } from '../types';
 
 export const ScreenshotValidator: React.FC = () => {
-  const [results, setResults] = useState<ScreenshotValidationResult[]>([
-    {
-      fileName: '01_Dashboard_6.7.png',
-      width: 1290,
-      height: 2796,
-      matchedDevice: 'iPhone 6.7" (15 Pro Max / 14 Pro Max)',
-      isValidDimension: true,
-      issues: [],
-      warnings: []
-    },
-    {
-      fileName: '02_Bad_Dimension.png',
-      width: 1080,
-      height: 1920,
-      matchedDevice: 'Android 1080p (Non-Standard iOS)',
-      isValidDimension: false,
-      issues: ['Dimensions 1080x1920 do not match any Apple App Store Connect specifications.'],
-      warnings: ['App Store Connect will reject this upload with an asset dimension error.']
-    }
-  ]);
+  const [results, setResults] = useState<ScreenshotValidationResult[]>([]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -122,46 +103,57 @@ export const ScreenshotValidator: React.FC = () => {
       {/* Validation Results List */}
       <div className="space-y-3">
         <h3 className="font-bold text-slate-900 text-sm font-display">Uploaded Screenshot Checks ({results.length})</h3>
-        <div className="space-y-2.5">
-          {results.map((res, idx) => (
-            <div
-              key={idx}
-              className={`flex items-start justify-between rounded-xl border p-4 text-xs transition-colors bg-white shadow-xs ${
-                res.isValidDimension
-                  ? 'border-emerald-200'
-                  : 'border-red-200'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900 font-mono">{res.fileName}</span>
-                  <span className="font-mono text-slate-500 text-[11px]">({res.width} × {res.height} px)</span>
-                </div>
-                <div className="text-slate-600">
-                  Target: <span className="font-semibold text-blue-600">{res.matchedDevice}</span>
-                </div>
-                {res.issues.length > 0 && (
-                  <div className="text-red-700 text-[11px] font-mono mt-1">
-                    {res.issues.join(' ')}
-                  </div>
-                )}
-                {res.warnings.length > 0 && (
-                  <div className="text-amber-700 text-[11px] font-mono">
-                    {res.warnings.join(' ')}
-                  </div>
-                )}
-              </div>
-
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono border ${
-                res.isValidDimension
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
-              }`}>
-                {res.isValidDimension ? 'VALID DIMENSION' : 'INVALID SIZE'}
-              </span>
+        
+        {results.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-3xs flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+              <ImageIcon className="h-6 w-6 text-slate-400" />
             </div>
-          ))}
-        </div>
+            <h4 className="text-sm font-bold text-slate-700">No screenshots checked yet</h4>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm">Upload a screenshot above to automatically verify its dimensions against App Store Connect requirements.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {results.map((res, idx) => (
+              <div
+                key={idx}
+                className={`flex items-start justify-between rounded-xl border p-4 text-xs transition-colors bg-white shadow-xs ${
+                  res.isValidDimension
+                    ? 'border-emerald-200'
+                    : 'border-red-200'
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 font-mono">{res.fileName}</span>
+                    <span className="font-mono text-slate-500 text-[11px]">({res.width} × {res.height} px)</span>
+                  </div>
+                  <div className="text-slate-600">
+                    Target: <span className="font-semibold text-blue-600">{res.matchedDevice}</span>
+                  </div>
+                  {res.issues.length > 0 && (
+                    <div className="text-red-700 text-[11px] font-mono mt-1">
+                      {res.issues.join(' ')}
+                    </div>
+                  )}
+                  {res.warnings.length > 0 && (
+                    <div className="text-amber-700 text-[11px] font-mono">
+                      {res.warnings.join(' ')}
+                    </div>
+                  )}
+                </div>
+
+                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono border ${
+                  res.isValidDimension
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-red-200 bg-red-50 text-red-700'
+                }`}>
+                  {res.isValidDimension ? 'VALID DIMENSION' : 'INVALID SIZE'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

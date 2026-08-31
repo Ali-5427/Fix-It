@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Finding, FindingStatus } from '../types';
 import { store } from '../services/store';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface FindingDetailModalProps {
   finding: Finding | null;
@@ -32,6 +33,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   currentBuild,
   onClose
 }) => {
+  useScrollLock(!!finding);
   if (!finding) return null;
 
   const [copiedSnippet, setCopiedSnippet] = useState(false);

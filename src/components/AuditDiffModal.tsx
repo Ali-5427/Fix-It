@@ -10,6 +10,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { AuditComparison } from '../types';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface AuditDiffModalProps {
   comparison: AuditComparison | null;
@@ -22,6 +23,7 @@ export const AuditDiffModal: React.FC<AuditDiffModalProps> = ({
   appName,
   onClose
 }) => {
+  useScrollLock(!!comparison);
   if (!comparison) return null;
 
   const [activeTab, setActiveTab] = useState<'resolved' | 'remaining' | 'new'>('resolved');

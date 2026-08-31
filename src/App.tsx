@@ -223,7 +223,7 @@ export default function App() {
         />
 
         {/* Main Content Pane */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
           {/* Top Demo Banner for instant exploration if active */}
           {false && currentView === 'audit' && (
             <div className="bg-blue-50/95 border-b border-blue-200 px-4 py-2 text-xs text-center flex items-center justify-center gap-2">
@@ -240,7 +240,7 @@ export default function App() {
             </div>
           )}
 
-          <main className="flex-1 overflow-hidden h-full">
+          <main className="flex-1 overflow-hidden h-full min-h-0">
             {currentView === 'dashboard' && (
               <Dashboard
                 user={user}
@@ -415,7 +415,7 @@ export default function App() {
             </div>
           </div>
         </header>
-        <main className="flex-1">
+        <main className="flex-1 min-h-0">
           <AuditView
             app={tryNowResult.app}
             audit={tryNowResult.audit}
@@ -465,7 +465,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 overflow-y-auto">
         <LandingPage
           onStartAudit={handleLandingStartAudit}
           onExploreDemo={handleLandingExploreDemo}

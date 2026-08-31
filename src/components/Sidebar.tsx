@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { store } from '../services/store';
 import { Application, User } from '../types';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface SidebarProps {
   currentView: string;
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedApp
 }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  useScrollLock(isMobileOpen);
 
   const handleSignOut = () => {
     store.logout();
@@ -165,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Main Navigation */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-6 min-h-0">
           
           {/* Main Views */}
           <div className="space-y-1">

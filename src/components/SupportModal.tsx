@@ -12,6 +12,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { siteConfig } from '../config/site';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface SupportModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface SupportModalProps {
 }
 
 export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) => {
+  useScrollLock(isOpen);
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('App Store Rejection Assistance');
   const [message, setMessage] = useState('');
@@ -71,7 +73,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {submitted ? (
             <div className="py-10 text-center space-y-4">
               <div className="h-14 w-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">

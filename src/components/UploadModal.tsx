@@ -16,6 +16,7 @@ import {
 import { extractAppArtifact, parseInspectionData } from '../engine/extractor';
 import { store } from '../services/store';
 import { NormalizedAppInspection } from '../types';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   onClose,
   onAuditCompleted
 }) => {
+  useScrollLock(isOpen);
   const [activeTab, setActiveTab] = useState<'file' | 'plist'>('file');
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);

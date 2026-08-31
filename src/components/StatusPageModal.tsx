@@ -1,4 +1,5 @@
 import React from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { 
   Activity, 
   CheckCircle2, 
@@ -18,6 +19,7 @@ interface StatusPageModalProps {
 }
 
 export const StatusPageModal: React.FC<StatusPageModalProps> = ({ isOpen, onClose }) => {
+  useScrollLock(isOpen);
   if (!isOpen) return null;
 
   const services = [
@@ -123,7 +125,7 @@ export const StatusPageModal: React.FC<StatusPageModalProps> = ({ isOpen, onClos
         </div>
 
         {/* Services List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 min-h-0">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono">Component Health</h4>
 
           {services.map((svc, idx) => (
