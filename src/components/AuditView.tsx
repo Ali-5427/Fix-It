@@ -31,6 +31,8 @@ interface AuditViewProps {
   onOpenUpload: () => void;
   onGenerateReport: () => void;
   onOpenDiff: (comparison: any) => void;
+  isTryNow?: boolean;
+  onOpenAuth?: (mode?: 'login' | 'register') => void;
 }
 
 export const AuditView: React.FC<AuditViewProps> = ({
@@ -40,7 +42,9 @@ export const AuditView: React.FC<AuditViewProps> = ({
   onSelectFinding,
   onOpenUpload,
   onGenerateReport,
-  onOpenDiff
+  onOpenDiff,
+  isTryNow = false,
+  onOpenAuth
 }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
@@ -109,6 +113,37 @@ export const AuditView: React.FC<AuditViewProps> = ({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6 bg-white min-h-[calc(100vh-140px)]">
       
+      {isTryNow && (
+        <div className="rounded-3xl bg-blue-50 border border-blue-200 p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs sm:text-sm font-semibold text-blue-900">
+                Showing what we can check from public App Store data — connect your developer account for the full check
+              </p>
+              <p className="text-[11px] text-blue-700 mt-0.5">
+                Listing analysis checks metadata, descriptions, category rules, and screenshot compliance. Binary scan requires file upload.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+            <button
+              onClick={() => onOpenAuth?.('register')}
+              className="flex-1 md:flex-initial rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 text-xs font-mono transition-all shadow-xs cursor-pointer text-center"
+            >
+              Connect Account
+            </button>
+            <button
+              disabled
+              className="flex-1 md:flex-initial rounded-xl bg-slate-200 text-slate-500 font-bold px-4 py-2 text-xs font-mono cursor-not-allowed text-center"
+              title="Requires connected account or build upload"
+            >
+              Binary Check (Disabled)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner Card */}
       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8 space-y-6">
         
@@ -127,7 +162,7 @@ export const AuditView: React.FC<AuditViewProps> = ({
               </span>
 
               {/* Build History Selector */}
-              {auditsHistory.length > 1 ? (
+              {!isTryNow && auditsHistory.length > 1 ? (
                 <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs">
                   <History className="h-3.5 w-3.5 text-slate-500" />
                   <select
@@ -152,44 +187,46 @@ export const AuditView: React.FC<AuditViewProps> = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1.5 font-display">{app.name}</h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {auditsHistory.length > 1 && (
+          {!isTryNow && (
+            <div className="flex flex-wrap items-center gap-2.5">
+              {auditsHistory.length > 1 && (
+                <button
+                  id="btn_compare_builds"
+                  onClick={() => {
+                    const idx = auditsHistory.findIndex(a => a.id === audit.id);
+                    const prev = idx > 0 ? auditsHistory[idx - 1] : auditsHistory[0];
+                    if (prev && prev.id !== audit.id) {
+                      const comp = compareAudits(prev, audit);
+                      onOpenDiff(comp);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-300 transition-colors font-mono cursor-pointer shadow-xs"
+                >
+                  <GitCompare className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Compare Builds</span>
+                </button>
+              )}
+
               <button
-                id="btn_compare_builds"
-                onClick={() => {
-                  const idx = auditsHistory.findIndex(a => a.id === audit.id);
-                  const prev = idx > 0 ? auditsHistory[idx - 1] : auditsHistory[0];
-                  if (prev && prev.id !== audit.id) {
-                    const comp = compareAudits(prev, audit);
-                    onOpenDiff(comp);
-                  }
-                }}
-                className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-300 transition-colors font-mono cursor-pointer shadow-xs"
+                id="btn_rerun_audit"
+                onClick={handleReRunAudit}
+                disabled={isRechecking}
+                className="flex items-center gap-1.5 rounded-xl bg-white hover:bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-300 transition-colors font-mono disabled:opacity-50 cursor-pointer shadow-sm"
               >
-                <GitCompare className="h-3.5 w-3.5 text-blue-600" />
-                <span>Compare Builds</span>
+                <RefreshCw className={`h-3.5 w-3.5 ${isRechecking ? 'animate-spin text-blue-600' : 'text-slate-600'}`} />
+                <span>{isRechecking ? 'Auditing...' : 'Re-run Preflight'}</span>
               </button>
-            )}
 
-            <button
-              id="btn_rerun_audit"
-              onClick={handleReRunAudit}
-              disabled={isRechecking}
-              className="flex items-center gap-1.5 rounded-xl bg-white hover:bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-300 transition-colors font-mono disabled:opacity-50 cursor-pointer shadow-sm"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRechecking ? 'animate-spin text-blue-600' : 'text-slate-600'}`} />
-              <span>{isRechecking ? 'Auditing...' : 'Re-run Preflight'}</span>
-            </button>
-
-            <button
-              id="btn_submission_report"
-              onClick={onGenerateReport}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all font-mono cursor-pointer"
-            >
-              <FileCheck className="h-4 w-4" />
-              <span>Submission Report</span>
-            </button>
-          </div>
+              <button
+                id="btn_submission_report"
+                onClick={onGenerateReport}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all font-mono cursor-pointer"
+              >
+                <FileCheck className="h-4 w-4" />
+                <span>Submission Report</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Executive Summary & Progress Bar */}

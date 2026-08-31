@@ -22,8 +22,9 @@ import { SupportModal } from './components/SupportModal';
 import { SiteFooter } from './components/SiteFooter';
 
 import { store } from './services/store';
+import { apiClient } from './services/api';
 import { Application, AuditRun, Finding, SubmissionReport, AuditComparison } from './types';
-import { ShieldCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 
 export default function App() {
   const [, setTick] = useState(0);
@@ -74,6 +75,70 @@ export default function App() {
   const [privacyStringsModalOpen, setPrivacyStringsModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
+
+  // Try it now states
+  const [tryNowLoading, setTryNowLoading] = useState(false);
+  const [tryNowStep, setTryNowStep] = useState(0);
+  const [tryNowStatusText, setTryNowStatusText] = useState('');
+  const [tryNowError, setTryNowError] = useState<string | null>(null);
+  const [tryNowResult, setTryNowResult] = useState<{
+    app: Application;
+    audit: AuditRun;
+  } | null>(null);
+
+  const handleTryNow = async (query: string) => {
+    setTryNowLoading(true);
+    setTryNowError(null);
+
+    try {
+      // Step 1: Query App Store
+      setTryNowStep(1);
+      setTryNowStatusText('Looking up your app in App Store registry...');
+      
+      const apiPromise = apiClient.tryNow(query);
+      await new Promise(r => setTimeout(r, 600));
+
+      // Step-2: Parse Listing
+      setTryNowStep(2);
+      setTryNowStatusText('Checking the listing and metadata...');
+      await new Promise(r => setTimeout(r, 700));
+
+      // Step-3: Validate Specs
+      setTryNowStep(3);
+      setTryNowStatusText('Analyzing screenshots and validation parameters...');
+      await new Promise(r => setTimeout(r, 600));
+
+      // Step-4: Run Rules
+      setTryNowStep(4);
+      setTryNowStatusText('Running compliance rule engine...');
+
+      const { inspection, auditRun } = await apiPromise;
+
+      const mockApp: Application = {
+        id: `try_now_${inspection.bundleId}`,
+        userId: 'anonymous',
+        name: inspection.appName,
+        bundleId: inspection.bundleId,
+        platform: 'ios',
+        currentVersion: inspection.version,
+        currentBuild: '1',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        primaryCategory: inspection.metadata.category
+      };
+
+      setTryNowResult({
+        app: mockApp,
+        audit: auditRun
+      });
+      setTryNowLoading(false);
+    } catch (err: any) {
+      console.error(err);
+      setTryNowError(err.message || "We couldn't check that app. Please check your internet connection or spelling.");
+      setTryNowLoading(false);
+    }
+  };
 
   const handleStartAudit = () => {
     setUploadModalOpen(true);
@@ -278,6 +343,91 @@ export default function App() {
     );
   }
 
+  if (tryNowLoading) {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 space-y-6">
+        <div className="max-w-md w-full text-center space-y-4">
+          <Loader2 className="h-10 w-10 text-blue-600 animate-spin mx-auto" />
+          <h2 className="text-xl font-bold text-slate-900 font-mono">Running Preflight Check</h2>
+          <p className="text-xs text-slate-500 font-mono">{tryNowStatusText}</p>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(tryNowStep / 4) * 100}%` }}
+            ></div>
+          </div>
+          <div className="flex justify-between text-[10px] font-mono text-slate-400">
+            <span>Query App Store</span>
+            <span>Parse Listing</span>
+            <span>Validate Specs</span>
+            <span>Run Rules</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && tryNowResult) {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
+        <header className="sticky top-0 z-50 w-full transition-all">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-2">
+            <div className="flex h-14 items-center justify-between rounded-full border border-slate-200/60 bg-transparent px-5 sm:px-7 backdrop-blur-[4px] shadow-xs" style={{ boxShadow: 'inset 0 1.5px 0 rgba(255, 255, 255, 0.95), 0 8px 30px rgba(0, 0, 0, 0.03)' }}>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setTryNowResult(null)}
+                  className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
+                >
+                  <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
+                    <ShieldCheck className="h-4.5 w-4.5 text-white" />
+                  </div>
+                  <span className="font-bold text-base tracking-tight text-slate-900 font-mono">Fixit</span>
+                </button>
+              </div>
+              <button
+                onClick={() => setTryNowResult(null)}
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition-colors cursor-pointer"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </header>
+        <main className="flex-1">
+          <AuditView
+            app={tryNowResult.app}
+            audit={tryNowResult.audit}
+            auditsHistory={[tryNowResult.audit]}
+            onSelectFinding={(f) => setSelectedFinding(f)}
+            onOpenUpload={() => {}}
+            onGenerateReport={() => {}}
+            onOpenDiff={() => {}}
+            isTryNow={true}
+            onOpenAuth={handleOpenAuth}
+          />
+        </main>
+
+        <FindingDetailModal
+          finding={selectedFinding}
+          appId={tryNowResult?.app?.id || ''}
+          auditId={tryNowResult?.audit?.id || ''}
+          currentBuild="1"
+          onClose={() => setSelectedFinding(null)}
+        />
+
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          initialMode={authModalMode}
+          initialTier={authModalTier}
+          onSuccess={() => setCurrentView('dashboard')}
+        />
+      </div>
+    );
+  }
+
   // Public Landing Page view for non-authenticated or explicitly landing view
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -305,6 +455,9 @@ export default function App() {
           onOpenPrivacyStrings={() => user ? setPrivacyStringsModalOpen(true) : handleOpenAuth('register')}
           onOpenStatus={() => user ? setStatusModalOpen(true) : handleOpenAuth('register')}
           onOpenSupport={() => user ? setSupportModalOpen(true) : handleOpenAuth('register')}
+          onTryNow={handleTryNow}
+          tryNowError={tryNowError}
+          isTryNowLoading={tryNowLoading}
         />
       </main>
 

@@ -403,7 +403,8 @@ export function evaluateInspection(
   appId: string,
   buildNumber: string,
   appVersion: string,
-  existingFindings: Finding[] = []
+  existingFindings: Finding[] = [],
+  isListingOnly: boolean = false
 ): AuditRun {
   const auditId = `audit_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const findings: Finding[] = [];
@@ -413,6 +414,19 @@ export function evaluateInspection(
 
   for (const rule of APP_STORE_RULES) {
     if (!rule.enabled) continue;
+    if (isListingOnly) {
+      const allowedListingRules = [
+        'RULE-PRIV-02',
+        'RULE-META-01',
+        'RULE-META-02',
+        'RULE-META-03',
+        'RULE-SHOT-01',
+        'RULE-COMP-02'
+      ];
+      if (!allowedListingRules.includes(rule.id)) {
+        continue;
+      }
+    }
     const result = evaluateRule(rule.id, inspection, rule.description, rule.remediationGuidance);
     if (!result.triggered) {
       passedChecks.push({ ruleId: rule.id, title: rule.title });

@@ -72,5 +72,18 @@ export const apiClient = {
     }
     const res = await fetch('/api/admin/rules', { headers });
     return res.json();
+  },
+
+  async tryNow(query: string): Promise<{ inspection: NormalizedAppInspection; auditRun: any }> {
+    const res = await fetch('/api/try-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to check app via iTunes search');
+    }
+    return res.json();
   }
 };

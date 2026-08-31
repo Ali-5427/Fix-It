@@ -135,45 +135,47 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           </div>
 
           {/* Status Switcher Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-slate-600">Finding Status:</span>
-              <select
-                value={finding.status}
-                onChange={(e) => handleStatusChange(e.target.value as FindingStatus)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-bold focus:outline-none cursor-pointer ${
-                  finding.status === 'FIXED'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    : finding.status === 'IN_PROGRESS'
-                    ? 'border-blue-200 bg-blue-50 text-blue-700'
-                    : finding.status === 'MANUAL_REVIEW'
-                    ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
-                    : 'border-red-200 bg-red-50 text-red-700'
-                }`}
-              >
-                <option value="OPEN">🔴 OPEN (Not Fixed)</option>
-                <option value="IN_PROGRESS">🟡 IN PROGRESS</option>
-                <option value="FIXED">🟢 FIXED / RESOLVED</option>
-                <option value="MANUAL_REVIEW">🟣 MANUAL REVIEW</option>
-                <option value="WONT_FIX">⚪ WON'T FIX (Acknowledged)</option>
-              </select>
-            </div>
+          {!appId.startsWith('try_now_') && (
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-600">Finding Status:</span>
+                <select
+                  value={finding.status}
+                  onChange={(e) => handleStatusChange(e.target.value as FindingStatus)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-bold focus:outline-none cursor-pointer ${
+                    finding.status === 'FIXED'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : finding.status === 'IN_PROGRESS'
+                      ? 'border-blue-200 bg-blue-50 text-blue-700'
+                      : finding.status === 'MANUAL_REVIEW'
+                      ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                      : 'border-red-200 bg-red-50 text-red-700'
+                  }`}
+                >
+                  <option value="OPEN">🔴 OPEN (Not Fixed)</option>
+                  <option value="IN_PROGRESS">🟡 IN PROGRESS</option>
+                  <option value="FIXED">🟢 FIXED / RESOLVED</option>
+                  <option value="MANUAL_REVIEW">🟣 MANUAL REVIEW</option>
+                  <option value="WONT_FIX">⚪ WON'T FIX (Acknowledged)</option>
+                </select>
+              </div>
 
-            {finding.status !== 'FIXED' ? (
-              <button
-                onClick={handleQuickMarkFixed}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Mark as Fixed in Build {targetBuild}</span>
-              </button>
-            ) : (
-              <span className="text-xs text-emerald-700 font-mono font-medium flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Resolved in Build {finding.fixedInBuild || targetBuild}</span>
-              </span>
-            )}
-          </div>
+              {finding.status !== 'FIXED' ? (
+                <button
+                  onClick={handleQuickMarkFixed}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Mark as Fixed in Build {targetBuild}</span>
+                </button>
+              ) : (
+                <span className="text-xs text-emerald-700 font-mono font-medium flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Resolved in Build {finding.fixedInBuild || targetBuild}</span>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Why It Matters */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -266,63 +268,64 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           )}
 
           {/* Developer Notes & Fix Timeline */}
-          <div className="pt-4 border-t border-slate-200 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
-              <span>Remediation Notes & Audit History</span>
-            </h4>
+          {!appId.startsWith('try_now_') && (
+            <div className="pt-4 border-t border-slate-200 space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
+                <span>Remediation Notes & Audit History</span>
+              </h4>
 
-            {/* Add note form */}
-            <form onSubmit={handleAddNote} className="space-y-2">
-              <textarea
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                placeholder="Log a fix note, Xcode commit hash, or explanation (e.g. Added PrivacyInfo.xcprivacy with CA92.1 in build 43)..."
-                rows={2}
-                className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
-              ></textarea>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-500">Target Build:</span>
-                  <input
-                    type="text"
-                    value={targetBuild}
-                    onChange={(e) => setTargetBuild(e.target.value)}
-                    className="w-16 rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900 font-mono"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!newNoteText.trim()}
-                  className="flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1 text-xs font-semibold text-white transition-colors cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add Note</span>
-                </button>
-              </div>
-            </form>
-
-            {/* Timeline */}
-            {finding.notes && finding.notes.length > 0 && (
-              <div className="space-y-2 mt-3">
-                {finding.notes.map(note => (
-                  <div key={note.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
-                    <div className="flex items-center justify-between text-slate-500 text-[11px]">
-                      <span className="font-medium text-slate-700">{note.author}</span>
-                      <span className="font-mono">{new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <p className="text-slate-800">{note.text}</p>
-                    {note.buildNumber && (
-                      <span className="inline-block font-mono text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                        Build {note.buildNumber}
-                      </span>
-                    )}
+              {/* Add note form */}
+              <form onSubmit={handleAddNote} className="space-y-2">
+                <textarea
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  placeholder="Log a fix note, Xcode commit hash, or explanation (e.g. Added PrivacyInfo.xcprivacy with CA92.1 in build 43)..."
+                  rows={2}
+                  className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                ></textarea>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500">Target Build:</span>
+                    <input
+                      type="text"
+                      value={targetBuild}
+                      onChange={(e) => setTargetBuild(e.target.value)}
+                      className="w-16 rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900 font-mono"
+                    />
                   </div>
-                ))}
-              </div>
-            )}
+                  <button
+                    type="submit"
+                    disabled={!newNoteText.trim()}
+                    className="flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1 text-xs font-semibold text-white transition-colors cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add Note</span>
+                  </button>
+                </div>
+              </form>
 
-          </div>
+              {/* Timeline */}
+              {finding.notes && finding.notes.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  {finding.notes.map(note => (
+                    <div key={note.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                        <span className="font-medium text-slate-700">{note.author}</span>
+                        <span className="font-mono">{new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <p className="text-slate-800">{note.text}</p>
+                      {note.buildNumber && (
+                        <span className="inline-block font-mono text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                          Build {note.buildNumber}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
 

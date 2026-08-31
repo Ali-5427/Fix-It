@@ -202,6 +202,7 @@ export interface NormalizedAppInspection {
     aspectRatio: string;
     isValidSize: boolean;
     issues?: string[];
+    precision?: 'EXACT' | 'UNKNOWN';
   }[];
   rawInfo?: Record<string, any>;
 }

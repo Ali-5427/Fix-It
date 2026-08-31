@@ -9,6 +9,8 @@ import {
 } from './src/server/geminiService.js';
 import { APP_STORE_RULES } from './src/engine/rules.js';
 import { APPLE_GUIDELINE_SOURCES } from './src/engine/appleSources.js';
+import { extractFromItunesLookup } from './src/engine/itunesExtractor.js';
+import { evaluateInspection } from './src/engine/evaluator.js';
 import { ADMIN_EMAILS } from './src/config/admin.js';
 
 dotenv.config();
@@ -25,6 +27,38 @@ process.on('uncaughtException', (err) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+interface RateLimitRecord {
+  count: number;
+  resetTime: number;
+}
+const rateLimitCache = new Map<string, RateLimitRecord>();
+
+function rateLimiter(req: Request, res: Response, next: () => void) {
+  const ip = (req.ip || req.headers['x-forwarded-for'] || 'unknown') as string;
+  const now = Date.now();
+  const limit = 10;
+  const timeframe = 60 * 60 * 1000; // 1 hour
+
+  const record = rateLimitCache.get(ip);
+  if (!record) {
+    rateLimitCache.set(ip, { count: 1, resetTime: now + timeframe });
+    return next();
+  }
+
+  if (now > record.resetTime) {
+    record.count = 1;
+    record.resetTime = now + timeframe;
+    return next();
+  }
+
+  if (record.count >= limit) {
+    return res.status(429).json({ error: 'Too many requests. Please try again in an hour.' });
+  }
+
+  record.count++;
+  next();
+}
 
 export function createServerApp() {
   const app = express();
@@ -84,6 +118,38 @@ export function createServerApp() {
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Metadata validation failed' });
+    }
+  });
+
+  app.post('/api/try-now', rateLimiter, async (req: Request, res: Response) => {
+    const { query } = req.body;
+    if (!query || query.trim() === '') {
+      return res.status(400).json({ error: 'Please enter an app name or App Store link.' });
+    }
+
+    try {
+      const inspection = await extractFromItunesLookup(query);
+      if (!inspection) {
+        return res.status(404).json({ error: "We couldn't find that app on the App Store. Make sure it's spelled correctly or try using the direct App Store URL/ID." });
+      }
+
+      // Run listing-only rules
+      const auditRun = evaluateInspection(
+        inspection,
+        `try_now_${inspection.bundleId}`,
+        '1',
+        inspection.version,
+        [],
+        true // isListingOnly = true
+      );
+
+      res.json({
+        inspection,
+        auditRun
+      });
+    } catch (err: any) {
+      console.error('Try-now error:', err);
+      res.status(500).json({ error: err.message || 'Failed to check app' });
     }
   });
 
