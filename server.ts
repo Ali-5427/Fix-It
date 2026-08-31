@@ -158,6 +158,9 @@ export function createServerApp() {
       });
     } catch (err: any) {
       console.error('Try-now error:', err);
+      if (err.message === 'TIMEOUT' || err.message === 'NETWORK_ERROR') {
+        return res.status(503).json({ error: "Couldn't reach the App Store right now, try again in a moment." });
+      }
       res.status(500).json({ error: err.message || 'Failed to check app' });
     }
   });

@@ -18,7 +18,21 @@ export async function extractFromItunesLookup(appNameOrId: string): Promise<Norm
       url = `https://itunes.apple.com/search?term=${encodeURIComponent(appNameOrId)}&entity=software&limit=1`;
     }
 
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    
+    let response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } catch (fetchErr: any) {
+      if (fetchErr.name === 'AbortError') {
+        throw new Error('TIMEOUT');
+      }
+      throw new Error('NETWORK_ERROR');
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
     if (!response.ok) {
       return null;
     }
@@ -112,8 +126,11 @@ export async function extractFromItunesLookup(appNameOrId: string): Promise<Norm
     };
 
     return inspection;
-  } catch (error) {
+  } catch (error: any) {
     console.error('iTunes Extractor Error:', error);
+    if (error.message === 'TIMEOUT' || error.message === 'NETWORK_ERROR') {
+      throw error;
+    }
     return null;
   }
 }
