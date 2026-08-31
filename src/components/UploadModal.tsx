@@ -182,7 +182,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="flex-1 min-h-0 p-6 overflow-y-auto space-y-6">
           
           {isProcessing ? (
             /* Animated Extraction & Audit Progress State */

@@ -152,7 +152,7 @@ ${report.reviewerNotesDraft}
         </div>
 
         {/* Printable Report Body */}
-        <div id="printable-report" className="p-6 md:p-8 overflow-y-auto space-y-6 bg-white text-slate-700 text-xs">
+        <div id="printable-report" className="flex-1 min-h-0 p-6 md:p-8 overflow-y-auto space-y-6 bg-white text-slate-700 text-xs">
           
           {/* Top Banner Card */}
           <div className={`p-5 rounded-2xl border ${

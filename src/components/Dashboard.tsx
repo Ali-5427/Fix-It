@@ -394,7 +394,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Right Column: Recent Checks & Shortcuts (Scrollable side-panel) */}
-          <div className="w-80 shrink-0 hidden md:flex flex-col gap-4 overflow-y-auto pl-5 border-l border-slate-200/80 pr-1 scrollbar-none h-full">
+          <div className="w-80 shrink-0 hidden md:flex flex-col gap-4 overflow-y-auto min-h-0 pl-5 border-l border-slate-200/80 pr-1 scrollbar-none h-full">
             
             {recentAudits.length > 0 && (
               <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-3xs shrink-0">

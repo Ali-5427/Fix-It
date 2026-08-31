@@ -117,7 +117,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="flex-1 min-h-0 p-6 overflow-y-auto space-y-6">
           
           {/* Finding Title & Guideline Reference */}
           <div>
